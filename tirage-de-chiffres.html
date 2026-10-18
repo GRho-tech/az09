@@ -3,25 +3,43 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tirage de chiffres</title>
+  <title>Trouver le bon compte</title>
   <style>
-    body { font-family: sans-serif; margin: 1rem; line-height: 1.5; }
-    .nav { margin: 0; font-size: 0.9rem; }
-    details { margin: 0.5rem 0 1rem; }
-    details summary { cursor: pointer; font-weight: bold; }
+    body { font-family: sans-serif; margin: 1rem; line-height: 1.5; color: #1f2937; background: #fdfdfc; }
+    .nav { margin: 0 0 0.5rem; font-size: 0.9rem; }
+    .nav a { color: #1e3a5f; }
+    h1 { color: #1e3a5f; margin: 0.25rem 0; }
+    details { margin: 0.5rem 0 1.25rem; }
+    details summary { cursor: pointer; font-weight: bold; color: #1e3a5f; }
     details ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
     details li { margin: 0.25rem 0; }
-    #nouveau-tirage { margin-top: 0.5rem; padding: 0.4rem 0.8rem; font: inherit; }
-    #tirage { white-space: nowrap; font-variant-numeric: tabular-nums; overflow-x: auto; max-width: 100%; }
-    label { display: block; margin-top: 1rem; }
+    #tirage {
+      display: inline-block; font-size: 3.5rem; font-weight: bold;
+      letter-spacing: 0.35em; font-variant-numeric: tabular-nums;
+      border: 3px solid #1e3a5f; border-radius: 0.5rem;
+      padding: 0.5rem 0.75rem 0.5rem 1.1rem; margin: 0;
+      white-space: nowrap; overflow-x: auto; max-width: 100%;
+      background: #fff;
+    }
+    #tirage .cible { color: #b45309; }
+    label { display: block; margin-top: 1.25rem; }
     textarea { display: block; margin-top: 0.25rem; width: 100%; box-sizing: border-box; font: inherit; padding: 0.5rem; }
-    #verifier { margin-top: 0.75rem; padding: 0.5rem 1rem; font: inherit; }
+    button {
+      margin-top: 0.75rem; padding: 0.55rem 1.1rem; font: inherit;
+      background: #1e3a5f; color: #fff; border: none; border-radius: 0.3rem;
+      cursor: pointer;
+    }
+    button:hover, button:focus-visible { background: #2c4f7c; }
+    #verifier { margin-top: 1rem; }
     #resultat { margin-top: 1rem; font-weight: bold; white-space: pre-wrap; }
     #resultat.ok { color: #15803d; }
     #resultat.ko { color: #b91c1c; }
+    #resultat.info { color: #1e3a5f; }
     #solutions { margin-top: 1rem; }
-    #solutions ul { margin: 0.5rem 0 0; padding-left: 1.25rem; max-height: 60vh; overflow-y: auto; }
+    #solutions p { margin: 0.5rem 0; }
+    #solutions ul { margin: 0.5rem 0 0; padding-left: 1.25rem; max-height: 55vh; overflow-y: auto; }
     #solutions li { margin: 0.15rem 0; font-variant-numeric: tabular-nums; }
+    .fin { margin-top: 2rem; border-top: 1px solid #d1d5db; padding-top: 1rem; }
   </style>
 </head>
 <body>
@@ -31,23 +49,24 @@
     <details>
       <summary>Règle du jeu</summary>
       <ul>
-        <li>Le tirage se compose de <strong>6 nombres</strong> parmi 1 à 10, 25, 50, 75 et 100, et d'un <strong>compte à trouver</strong> entre 101 et 999.</li>
+        <li>Le tirage se compose de <strong>6 nombres</strong> parmi 1 à 10, 25, 50, 75 et 100, et d'un <strong>compte à trouver</strong> entre 101 et 999 (en orange).</li>
         <li>À l'aide des <strong>4 opérations</strong> (+, −, ×, ÷), combinez tout ou partie des nombres tirés pour atteindre exactement le compte.</li>
         <li>Chaque nombre ne peut être utilisé <strong>qu'autant de fois qu'il figure dans le tirage</strong>.</li>
         <li>Tous les résultats intermédiaires doivent être des <strong>entiers positifs</strong> : les divisions doivent être exactes.</li>
         <li>Un résultat intermédiaire peut servir pour la suite du calcul, une seule fois.</li>
         <li>Saisie acceptée : calcul <strong>linéaire avec parenthèses</strong> (ex. <code>(25+6)*10+2*3+7</code>) ou <strong>décomposé en lignes</strong> (ex. <code>25-6=19</code> puis <code>19*10=190</code>…). Sont autorisés : chiffres, <code>+ - * / ( ) =</code> et espaces.</li>
-        <li>Le chronomètre démarre au tirage et s'arrête quand vous cliquez sur « Vérifier le compte ».</li>
+        <li>Le chronomètre démarre au tirage et s'arrête quand vous cliquez sur « Vérifier et rechercher des solutions ».</li>
       </ul>
     </details>
     <p id="tirage">— — — — — — —</p>
-    <button id="nouveau-tirage" type="button">Nouveau tirage</button>
-    <label for="solution">Saisir au clavier votre compte </label>
+    <label for="solution">Saisir au clavier vos opérations</label>
     <textarea id="solution" rows="3"></textarea>
-    <button id="verifier" type="button">Vérifier le compte</button>
+    <button id="verifier" type="button">Vérifier et rechercher des solutions</button>
     <p id="resultat" aria-live="polite"></p>
-    <button id="resoudre" type="button">Rechercher les solutions possibles pour ce tirage</button>
     <div id="solutions" aria-live="polite"></div>
+    <div class="fin">
+      <button id="nouveau-tirage" type="button">Nouveau tirage</button>
+    </div>
   </main>
   <script>
     "use strict";
@@ -67,7 +86,9 @@
       nombres.push(nombreAleatoire(101, 999));
       tirageCourant = nombres;
       debutChrono = Date.now();  // le chrono démarre à chaque tirage
-      document.getElementById("tirage").textContent = nombres.join(" ");
+      // Le compte à trouver (7e nombre) est mis en évidence en orange.
+      document.getElementById("tirage").innerHTML =
+        nombres.slice(0, 6).join(" ") + ' <span class="cible">' + nombres[6] + "</span>";
     }
 
     /* ---------- Analyse et vérification ---------- */
@@ -192,6 +213,88 @@
       return parts;
     }
 
+    // Analyse complète de la saisie : renvoie le résultat final atteint,
+    // ou lève une exception explicite si la saisie est invalide.
+    function analyserSaisie(saisie) {
+      const pool = creerPool();
+      const lignes = saisie.split(/\n+/).map(l => l.trim()).filter(Boolean);
+      let dernierResultat = null;
+
+      for (const ligne of lignes) {
+        // Découpe la ligne en morceaux selon "=", puis éclate chaque segment.
+        const parts = [];
+        for (const seg of ligne.split("=").map(s => s.trim()).filter(Boolean)) {
+          parts.push(...eclaterSegment(seg));
+        }
+        if (parts.length === 0) throw new Error("Ligne vide ou invalide.");
+
+        let chaine = null;   // valeur de la chaîne d'égalités en cours
+        let attendu = null;  // nombre déclaré à gauche (ex. "19 = ...") en attente de définition
+        let resultatLigne = null;
+        let aCalcule = false; // la ligne contient-elle un vrai calcul sur les nombres du tirage ?
+
+        for (const part of parts) {
+          if (part.type === "expr") {
+            aCalcule = true;
+            const v = parseExpression(tokenizer(part.texte), pool);
+            if (attendu !== null) {
+              // "19 = 25 - 6" : l'expression doit définir le nombre annoncé.
+              if (v !== attendu) {
+                throw new Error("Égalité incorrecte : " + part.texte + " donne " + v + ", pas " + attendu + ".");
+              }
+              resultatLigne = attendu;
+              attendu = null;
+              chaine = null;
+              // Le résultat n'est disponible que maintenant : il est démontré par le calcul.
+              ajouter(pool, attendu);
+            } else if (chaine !== null) {
+              // Chaîne d'égalités : "a = b" où b est une expression de même valeur.
+              if (v !== chaine) {
+                throw new Error("Égalité incorrecte : " + part.texte + " donne " + v + ", attendu " + chaine + ".");
+              }
+            } else {
+              // Nouvelle chaîne : son résultat devient disponible immédiatement.
+              chaine = v;
+              ajouter(pool, v);
+            }
+          } else {
+            // Un nombre pur : ferme la chaîne en cours ou en déclare une nouvelle.
+            if (chaine !== null) {
+              if (part.valeur !== chaine) {
+                throw new Error("Égalité incorrecte : le calcul donne " + chaine + ", pas " + part.valeur + ".");
+              }
+              resultatLigne = chaine;
+              chaine = null;
+            } else if (attendu !== null) {
+              if (part.valeur !== attendu) {
+                throw new Error("Égalité incorrecte : " + attendu + " ≠ " + part.valeur + ".");
+              }
+              resultatLigne = attendu;
+              attendu = null;
+            } else {
+              // Nombre isolé : déclaration ("19 = ...") ou réécriture du résultat précédent.
+              // Pas d'ajout au pool ici : le nombre ne devient disponible
+              // que s'il est ensuite démontré par une expression.
+              attendu = part.valeur;
+            }
+          }
+        }
+
+        if (attendu !== null) {
+          throw new Error("Le nombre " + attendu + " doit être suivi d'une expression (ex. « " + attendu + " = ... »).");
+        }
+        if (!aCalcule) {
+          throw new Error("La ligne « " + ligne + " » ne contient aucun calcul utilisant les nombres du tirage.");
+        }
+        if (chaine !== null) resultatLigne = chaine;
+        if (resultatLigne === null) throw new Error("Ligne sans résultat : « " + ligne + " ».");
+        dernierResultat = resultatLigne;
+      }
+
+      if (dernierResultat === null) throw new Error("Aucun calcul trouvé.");
+      return dernierResultat;
+    }
+
     // Temps écoulé depuis le tirage, formaté "x min y s" ou "y,z s".
     function tempsEcoule() {
       const ms = Date.now() - debutChrono;
@@ -201,98 +304,6 @@
       const s = Math.round(secondes % 60);
       return min + " min " + s + " s";
     }
-
-    function verifierSaisie() {
-      const zone = document.getElementById("resultat");
-      zone.className = "";
-      const cible = tirageCourant[6];
-      const saisie = document.getElementById("solution").value.trim();
-
-      try {
-        if (!saisie) throw new Error("Veuillez saisir votre solution.");
-
-        const pool = creerPool();
-        const lignes = saisie.split(/\n+/).map(l => l.trim()).filter(Boolean);
-        let dernierResultat = null;
-
-        for (const ligne of lignes) {
-          // Découpe la ligne en morceaux selon "=", puis éclate chaque segment.
-          const parts = [];
-          for (const seg of ligne.split("=").map(s => s.trim()).filter(Boolean)) {
-            parts.push(...eclaterSegment(seg));
-          }
-          if (parts.length === 0) throw new Error("Ligne vide ou invalide.");
-
-          let chaine = null;   // valeur de la chaîne d'égalités en cours
-          let attendu = null;  // nombre déclaré à gauche (ex. "19 = ...") en attente de définition
-          let resultatLigne = null;
-
-          for (const part of parts) {
-            if (part.type === "expr") {
-              const v = parseExpression(tokenizer(part.texte), pool);
-              if (attendu !== null) {
-                // "19 = 25 - 6" : l'expression doit définir le nombre annoncé.
-                if (v !== attendu) {
-                  throw new Error("Égalité incorrecte : " + part.texte + " donne " + v + ", pas " + attendu + ".");
-                }
-                resultatLigne = attendu;
-                attendu = null;
-                chaine = null;
-              } else if (chaine !== null) {
-                // Chaîne d'égalités : "a = b" où b est une expression de même valeur.
-                if (v !== chaine) {
-                  throw new Error("Égalité incorrecte : " + part.texte + " donne " + v + ", attendu " + chaine + ".");
-                }
-              } else {
-                // Nouvelle chaîne : son résultat devient disponible immédiatement.
-                chaine = v;
-                ajouter(pool, v);
-              }
-            } else {
-              // Un nombre pur : ferme la chaîne en cours ou en déclare une nouvelle.
-              if (chaine !== null) {
-                if (part.valeur !== chaine) {
-                  throw new Error("Égalité incorrecte : le calcul donne " + chaine + ", pas " + part.valeur + ".");
-                }
-                resultatLigne = chaine;
-                chaine = null;
-              } else if (attendu !== null) {
-                if (part.valeur !== attendu) {
-                  throw new Error("Égalité incorrecte : " + attendu + " ≠ " + part.valeur + ".");
-                }
-                resultatLigne = attendu;
-                attendu = null;
-              } else {
-                // Nombre isolé : déclaration ("19 = ...") ou réécriture du résultat précédent.
-                attendu = part.valeur;
-                ajouter(pool, part.valeur);
-              }
-            }
-          }
-
-          if (attendu !== null) {
-            throw new Error("Le nombre " + attendu + " doit être suivi d'une expression (ex. « " + attendu + " = ... »).");
-          }
-          if (chaine !== null) resultatLigne = chaine;
-          if (resultatLigne === null) throw new Error("Ligne sans résultat : « " + ligne + " ».");
-          dernierResultat = resultatLigne;
-        }
-
-        if (dernierResultat === null) throw new Error("Aucun calcul trouvé.");
-        if (dernierResultat !== cible) {
-          zone.textContent = "Le compte ne tombe pas juste : votre résultat est " + dernierResultat + ", le compte à trouver est " + cible + ". Temps de recherche : " + tempsEcoule() + ".";
-          zone.className = "ko";
-          return;
-        }
-        zone.textContent = "Bravo ! Le compte est bon : " + cible + " ✔ Trouvé en " + tempsEcoule() + ".";
-        zone.className = "ok";
-      } catch (e) {
-        zone.textContent = "Solution invalide : " + e.message + " (temps écoulé : " + tempsEcoule() + ")";
-        zone.className = "ko";
-      }
-    }
-
-    document.getElementById("verifier").addEventListener("click", verifierSaisie);
 
     /* ---------- Recherche de toutes les solutions ---------- */
 
@@ -370,24 +381,75 @@
       return { cible, solutions: [...solutions.keys()], meilleure };
     }
 
-    function resoudreTirage() {
-      const zone = document.getElementById("solutions");
+    /* ---------- Action fusionnée : vérifier puis rechercher ---------- */
+
+    function verifierEtResoudre() {
+      const zone = document.getElementById("resultat");
+      const zoneSol = document.getElementById("solutions");
+      const cible = tirageCourant[6];
+      const saisie = document.getElementById("solution").value.trim();
+      const temps = tempsEcoule();
+
+      // 1. Analyse de la saisie de l'utilisateur (si présente).
+      let valeurUtilisateur = null;
+      let erreurSaisie = null;
+      if (saisie) {
+        try {
+          valeurUtilisateur = analyserSaisie(saisie);
+        } catch (e) {
+          erreurSaisie = e.message;
+        }
+      }
+
+      // 2. Recherche exhaustive des solutions du tirage.
       const t0 = performance.now();
       const r = chercherSolutions();
-      const dureeMs = performance.now() - t0;
-      const secondes = (dureeMs / 1000).toFixed(3).replace(".", ",");
-      let html = "";
-      if (r.solutions.length > 0) {
-        html += "<p><strong>" + r.solutions.length + " solution" + (r.solutions.length > 1 ? "s" : "") +
-          " trouvée" + (r.solutions.length > 1 ? "s" : "") + " en " + secondes + " secondes :</strong></p><ul>" +
-          r.solutions.map(s => "<li>" + s + "</li>").join("") + "</ul>";
+      const dureeRecherche = ((performance.now() - t0) / 1000).toFixed(3).replace(".", ",");
+      const nbSol = r.solutions.length;
+      const exactPossible = nbSol > 0;
+
+      // 3. Message de résultat principal.
+      let texte, classe;
+      if (valeurUtilisateur === cible) {
+        texte = "Bravo, vous avez trouvé le bon compte : " + cible + " ✔ Trouvé en " + temps + ".\n" +
+          "Il existait " + nbSol + " solution" + (nbSol > 1 ? "s" : "") + " pour ce tirage.";
+        classe = "ok";
       } else {
-        const m = r.meilleure;
-        html += "<p><strong>Aucune solution exacte en " + secondes + " secondes.</strong></p>" +
-          "<p>Meilleure approche : " + m.valeur + " (à " + m.ecart + " du compte " + r.cible + ") :<br>" +
-          strNode(m.node) + "</p>";
+        let detail;
+        if (erreurSaisie !== null) detail = "Votre saisie est invalide : " + erreurSaisie;
+        else if (valeurUtilisateur === null) detail = "Vous n'avez rien saisi";
+        else detail = "Votre résultat est " + valeurUtilisateur + ", le compte à trouver était " + cible;
+        detail += " (temps écoulé : " + temps + ").";
+
+        if (exactPossible) {
+          texte = "Vous n'avez pas trouvé le bon compte. " + detail + "\n" +
+            "Le compte " + cible + " était possible : " + nbSol + " solution" + (nbSol > 1 ? "s" : "") + " existe" + (nbSol > 1 ? "nt" : "") + " (voir la liste ci-dessous).";
+        } else {
+          const m = r.meilleure;
+          let ligneMeilleure;
+          if (valeurUtilisateur !== null && Math.abs(valeurUtilisateur - cible) === m.ecart) {
+            ligneMeilleure = "C'était toutefois la meilleure solution possible : " + m.valeur + " = " + strNode(m.node) + ". Bien joué !";
+          } else {
+            ligneMeilleure = "La meilleure solution possible était : " + m.valeur + " (à " + m.ecart + " du compte) = " + strNode(m.node) + ".";
+          }
+          texte = "Vous n'avez pas trouvé le bon compte. " + detail + "\n" +
+            "Le compte " + cible + " était impossible à trouver exactement.\n" + ligneMeilleure;
+        }
+        classe = "ko";
       }
-      zone.innerHTML = html;
+      zone.textContent = texte;
+      zone.className = classe;
+
+      // 4. Liste des solutions (ou de la meilleure approche).
+      let html = "<p><strong>" +
+        (nbSol > 0
+          ? nbSol + " solution" + (nbSol > 1 ? "s" : "") + " trouvée" + (nbSol > 1 ? "s" : "") + " en " + dureeRecherche + " s :"
+          : "Aucune solution exacte (recherche en " + dureeRecherche + " s).") +
+        "</strong></p>";
+      if (nbSol > 0) {
+        html += "<ul>" + r.solutions.map(s => "<li>" + s + "</li>").join("") + "</ul>";
+      }
+      zoneSol.innerHTML = html;
     }
 
     function nouveauTirage() {
@@ -399,7 +461,7 @@
       document.getElementById("solutions").innerHTML = "";
     }
 
-    document.getElementById("resoudre").addEventListener("click", resoudreTirage);
+    document.getElementById("verifier").addEventListener("click", verifierEtResoudre);
     document.getElementById("nouveau-tirage").addEventListener("click", nouveauTirage);
     // Tirage automatique au chargement.
     afficherTirage();
