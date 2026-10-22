@@ -8,7 +8,8 @@
   :root { font-family: system-ui, sans-serif; color: #111827; background: #f8fafc; }
   body { margin: 0 auto; max-width: 42rem; padding: 1rem; line-height: 1.6; }
   .lettres {
-    font-size: 3.5rem; font-weight: bold; letter-spacing: .15em;
+    font-size: clamp(1.75rem, 8vw, 3.5rem); font-weight: bold;
+    letter-spacing: .1em; line-height: 1.3; overflow-wrap: anywhere;
     background: #fff; border: 3px solid #111827; border-radius: .5rem;
     padding: 1rem 1.25rem; text-align: center; margin: 1rem 0;
   }
@@ -50,8 +51,7 @@
        Le mot doit exister dans le dictionnaire.</p>
   </details>
 
-  <p id="lettres" class="lettres" role="text" tabindex="0"
-     aria-labelledby="titre-jeu">—</p>
+  <p id="lettres" class="lettres" aria-label="Lettres tirées">—</p>
 
   <form id="form" novalidate onsubmit="return false;">
     <label for="proposition">Votre proposition (10 caractères maximum)</label>
@@ -70,11 +70,28 @@
   </div>
 
   <p id="statut-dico" role="status" aria-live="polite"
-     style="margin-top:1.5rem;font-size:0.85rem;color:#475569;">Chargement du dictionnaire…</p>
+     style="margin-top:1.5rem;font-size:0.85rem;color:#475569;">JavaScript en
+     attente… Si ce message reste affiché, le script n'a pas pu s'exécuter
+     sur cet appareil (aperçu sans JavaScript, JavaScript désactivé…).</p>
   <p style="font-size:0.85rem;color:#475569;">Liste de mots issue du
      dictionnaire Dicollecte / LibreOffice (MPL&nbsp;2.0), complétée par
      Lexique&nbsp;383 (OpenLexicon, GNU GPL&nbsp;3).</p>
 </main>
+
+<script>
+/* Filet de sécurité : toute erreur (même une erreur de syntaxe du script
+   principal ci-dessous) est affichée dans le pied de page au lieu de
+   laisser la page silencieusement inerte. */
+window.onerror = function (message, source, ligne, col, err) {
+  var el = document.getElementById("statut-dico");
+  if (el) {
+    el.textContent = "Erreur JavaScript : " + message +
+      (ligne ? " (ligne " + ligne + ")" : "");
+    el.style.color = "#b91c1c";
+  }
+  return false;
+};
+</script>
 
 <script>
 /* ------------------------------------------------------------------
@@ -526,14 +543,31 @@ function nouveauTirage() {
   }
   tirage = lettres;                       // mémorise le tirage pour la vérification
   debutTirage = Date.now();               // (re)démarre le chronomètre
-  // Mise à jour de l'affichage
-  document.getElementById("lettres").textContent = tirage.join(" "); // lettres séparées par un espace
+  afficherLettres();                      // mise à jour de l'affichage
   document.getElementById("resultat").className = "neutre";           // zone neutre
   document.getElementById("resultat").textContent = "Nouveau tirage de 10 lettres.";
   const input = document.getElementById("proposition");
   input.value = "";                       // vide la saisie précédente
   input.focus();                          // met le focus dans le champ (utile lecteurs d'écran)
 }
+
+/* Écrit les lettres tirées dans la zone prévue, puis force le navigateur
+   à la repeindre (masquage/reaffichage + lecture de offsetHeight).
+   Safari/iOS peint parfois mal un texte modifié juste après le
+   chargement de la page : le texte est bien présent dans la page mais
+   invisible jusqu'à la prochaine interaction. Ce repeint forcé corrige
+   ce bug d'affichage déjà rencontré au début du projet. */
+function afficherLettres() {
+  const el = document.getElementById("lettres");
+  el.textContent = tirage.join(" ");     // lettres séparées par un espace
+  el.style.display = "none";             // masque la zone…
+  void el.offsetHeight;                  // …force le recalcul de mise en page…
+  el.style.display = "";                 // …et réaffiche : repeint garanti
+}
+// Ceinture et bretelles : une fois la page entièrement chargée et
+// peinte, on réécrit les lettres (utile si le premier affichage a eu
+// lieu avant la première peinture de la page sur iPhone).
+window.addEventListener("load", afficherLettres);
 
 /* Vérifie qu'un mot peut être formé avec les lettres du tirage,
    en respectant les quantités (deux E au tirage = deux E max) */
@@ -588,9 +622,10 @@ function verifier() {
   const zone = document.getElementById("resultat");     // zone de résultat
   const mot = normaliser(document.getElementById("proposition").value); // saisie normalisée
   const duree = formaterDuree(Date.now() - debutTirage); // temps écoulé depuis le tirage
-  if (!mot) {                                           // saisie vide
+  if (!mot) {                                           // saisie vide : on montre les solutions
     zone.className = "err";
-    zone.textContent = "Veuillez saisir un mot.";
+    zone.textContent = "Veuillez saisir un mot. " +
+      formaterSolutions(meilleuresSolutions());
     return;
   }
   if (mot.length > 10) {                                // trop long (œ compte double)
@@ -637,8 +672,12 @@ document.getElementById("proposition").addEventListener("keydown", function (e) 
   if (e.key === "Enter") { e.preventDefault(); verifier(); }
 });
 
-nouveauTirage();            // tirage initial au chargement de la page
-chargerDictionnaire();       // puis chargement du dictionnaire embarqué
+try {
+  nouveauTirage();            // tirage initial au chargement de la page
+  chargerDictionnaire();       // puis chargement du dictionnaire embarqué
+} catch (e) {                  // toute erreur de démarrage est affichée
+  statutDic("Erreur au démarrage : " + e.message);
+}
 </script>
 </body>
 </html>
