@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Jeux de lettres et de chiffres  — Trouver le bon compte et le mot le plus long</title>
+<style>
+  :root { font-family: system-ui, sans-serif; color: #111827; background: #f8fafc; }
+  body { margin: 0 auto; max-width: 46rem; padding: 1rem; line-height: 1.65; }
+  h1 { margin-bottom: .25em; }
+  nav ul { list-style: none; padding-left: 0; }
+  nav li { margin: .6em 0; }
+  nav a { font-size: 1.25rem; font-weight: 600; }
+  .regles { background: #fff; border: 2px solid #111827; border-radius: .5rem;
+    padding: .75rem 1.25rem; margin: 1rem 0; }
+  .regles h2 { margin-top: .25em; font-size: 1.05rem; }
+  :focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+  small { color: #475569; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Jeux de lettres et de chiffres accessibles</h1>
+  <p>Bienvenue sur cette petite collection de jeux sobre et toute simple, entièrement pensée pour
+     être <strong>parfaitement accessible aux personnes déficientes visuelles</strong> en particulier celles
+     utilisant des lecteurs d'écran couplés à des plages braille.
+     Les deux premiers jeux sont inspirés du célèbre jeu télévisé des chiffres et des lettres</p>
+
+  <nav aria-labelledby="titre-jeux">
+    <h2 id="titre-jeux">Choisissez un jeu</h2>
+    <ul>
+      <li><a href="tirage-de-chiffres.html">Trouver le bon compte</a></li>
+      <li><a href="tirage-de-lettres.html">Trouver le mot le plus long</a></li>
+    </ul>
+  </nav>
+
+  <section class="regles" aria-labelledby="titre-regles">
+    <h2 id="titre-regles">Règles des jeux</h2>
+
+    <h3>Trouver le bon compte</h3>
+    <p>Un tirage de six nombres et d'un nombre cible est proposé. À l'aide des
+       six nombres (chacun utilisable une seule fois) et des quatre opérations
+       élémentaires (addition, soustraction, multiplication, division à
+       résultat entier), il faut obtenir le nombre cible, ou s'en approcher le
+       plus possible.</p>
+
+    <h3>Trouver le mot le plus long</h3>
+    <p>Dix lettres sont tirées au hasard (entre 3 et 7 voyelles). Il faut
+       trouver le mot le plus long possible utilisant uniquement ces lettres,
+       chacune employée au plus autant de fois qu'elle apparaît dans le tirage.
+       La vérification est insensible aux accents : « é » vaut « e », « ç »
+       vaut « c », et « œ » compte pour « oe ».</p>
+  </section>
+
+  <section aria-labelledby="titre-licence">
+    <h2 id="titre-licence">Licence et sources</h2>
+    <p>Tous les fichiers de ce site sont placés sous licence
+       <strong>GNU GPL version 3</strong> : vous êtes libres de les utiliser,
+       les étudier, les modifier et les redistribuer, sous les conditions de
+       cette licence.</p>
+    <p>Pour le jeu « Trouver le mot le plus long », la liste de mots s'appuie
+       sur <strong>Lexique&nbsp;383</strong>, la base lexicale française du
+       projet <strong>OpenLexicon</strong> (New, Pallier &amp; al.),
+       librement réutilisable, filtrée ici par catégories grammaticales et
+       fréquence d'usage.</p>
+    <p><small>Conçu et réalisé par Rho.</small></p>
+  </section>
+</main>
+</body>
+</html>
