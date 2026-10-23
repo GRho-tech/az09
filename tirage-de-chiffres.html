@@ -30,6 +30,8 @@
       cursor: pointer;
     }
     button:hover, button:focus-visible { background: #2c4f7c; }
+    button:disabled { background: #9ca3af; cursor: not-allowed; }
+    textarea[readonly] { background: #f3f4f6; }
     #verifier { margin-top: 1rem; }
     #resultat { margin-top: 1rem; font-weight: bold; white-space: pre-wrap; }
     #resultat.ok { color: #15803d; }
@@ -79,6 +81,9 @@
     let tirageCourant = [];
     // Horodatage du tirage : point de départ du chronomètre de l'utilisateur.
     let debutChrono = null;
+    // Verrou anti-triche piloté par le code (et non par le DOM) : true entre
+    // le clic sur « Vérifier » et le clic suivant sur « Nouveau tirage ».
+    let verrouille = false;
 
     // Renvoie un entier aléatoire uniforme entre min et max inclus.
     function nombreAleatoire(min, max) {
@@ -479,6 +484,17 @@
     /* ---------- Action fusionnée : vérifier puis rechercher ---------- */
 
     function verifierEtResoudre() {
+      // Sécurité : si un clic parvenait au bouton alors qu'une vérification a
+      // déjà eu lieu, on ne refait rien (le verrou interdit le double emploi).
+      if (verrouille) return;
+      // Anti-triche : dès le clic, le verrou est posé (variable du code, pas
+      // du DOM), puis la saisie est figée et le bouton désactivé — impossible
+      // de modifier son calcul après avoir vu le verdict.
+      verrouille = true;
+      const champ = document.getElementById("solution");
+      const boutonVerifier = document.getElementById("verifier");
+      champ.setAttribute("readonly", "readonly");     // lecture seule
+      boutonVerifier.setAttribute("disabled", "disabled"); // bouton désactivé
       // Références des zones d'affichage.
       const zone = document.getElementById("resultat");
       const zoneSol = document.getElementById("solutions");
@@ -552,8 +568,36 @@
 
     // Génère un nouveau tirage et remet la page à zéro.
     function nouveauTirage() {
-      afficherTirage();                      // nouveau tirage (chrono relancé)
-      document.getElementById("solution").value = "";      // vide la saisie
+      // Déverrouillage IMMÉDIAT, avant toute autre action : le verrou est
+      // porté par la variable du code, donc fiable dans tous les cas.
+      verrouille = false;
+      // Stratégie « repartir de zéro » : on ne tente pas de déverrouiller les
+      // anciens éléments (certains environnements de prévisualisation
+      // rétablissent leurs attributs), on les REMPLACE par des éléments
+      // tout neufs, créés sans readonly ni disabled.
+      const ancienChamp = document.getElementById("solution");
+      const champ = document.createElement("textarea"); // élément vierge
+      champ.id = "solution";                     // même identifiant qu'avant
+      champ.rows = "3";                           // même hauteur qu'avant
+      ancienChamp.parentNode.replaceChild(champ, ancienChamp); // substitution
+      const ancienBouton = document.getElementById("verifier");
+      const boutonVerifier = document.createElement("button"); // élément vierge
+      boutonVerifier.id = "verifier";            // même identifiant qu'avant
+      boutonVerifier.type = "button";             // bouton simple, pas de formulaire
+      boutonVerifier.textContent = "Vérifier et rechercher des solutions"; // même libellé
+      ancienBouton.parentNode.replaceChild(boutonVerifier, ancienBouton); // substitution
+      boutonVerifier.addEventListener("click", verifierEtResoudre); // rebranché
+      // Garde-fou : si l'environnement rétablissait readonly ou disabled sur
+      // ces éléments neufs alors qu'aucune vérification n'est en cours, on
+      // retire l'attribut immédiatement (l'observateur réagit à tout ajout).
+      new MutationObserver(function () {
+        if (!verrouille && champ.hasAttribute("readonly")) champ.removeAttribute("readonly"); // saisie toujours autorisée
+        if (!verrouille && boutonVerifier.hasAttribute("disabled")) boutonVerifier.removeAttribute("disabled"); // bouton toujours actif
+      }).observe(champ, { attributes: true });    // surveille le champ
+      new MutationObserver(function () {
+        if (!verrouille && boutonVerifier.hasAttribute("disabled")) boutonVerifier.removeAttribute("disabled"); // bouton toujours actif
+      }).observe(boutonVerifier, { attributes: true }); // surveille le bouton
+      afficherTirage();                            // nouveau tirage (chrono relancé)
       const res = document.getElementById("resultat");
       res.textContent = "";                  // efface le message de résultat
       res.className = "";                    // retire la couleur vert/rouge
