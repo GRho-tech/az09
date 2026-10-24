@@ -44,7 +44,7 @@
 
   <details>
     <summary>Règle du jeu</summary>
-    <p>Dix lettres sont tirées au hasard (le tirage compte entre 3 et 7 voyelles).
+    <p>Dix lettres sont tirées au hasard (entre 3 et 7 voyelles).
        Il faut trouver le mot le plus long possible utilisant uniquement ces
        lettres, chacune employée au plus autant de fois qu'elle apparaît
        dans le tirage.</p>
@@ -693,12 +693,12 @@ function verifier() {
     // Cas 1 : le joueur a trouvé le mot le plus long possible
     zone.textContent = "Bravo ! Vous avez trouvé en " + duree +
       " « " + avecOrigine(mot) + " », le mot le plus long possible (" + mot.length +
-      " lettres)" + (solutions.mots.length > 1 ? ". <p>Les autres solutions sont : " +
-        solutions.mots.filter(m => m !== mot).slice(0, 50).map(avecOrigine).join(", ") : ".</p>");
+      " lettres)" + (solutions.mots.length > 1 ? ". Les autres solutions sont : " +
+        solutions.mots.filter(m => m !== mot).slice(0, 50).map(avecOrigine).join(", ") : ".");
   } else {
     // Cas 2 : mot correct mais plus court que l'optimum
     zone.textContent = "Vous avez trouvé en " + duree + " « " + avecOrigine(mot) +
-      " », un mot correct de " + mot.length + " lettres.<p>" + texteSolutions +"</p>";
+      " », un mot correct de " + mot.length + " lettres. " + texteSolutions;
   }
 }
 
