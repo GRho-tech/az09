@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Jeux de lettres et de chiffres  — Trouver le bon compte et le mot le plus long</title>
+<title>Jeux de chiffres et de lettres accessibles</title>
 <style>
   :root { font-family: system-ui, sans-serif; color: #111827; background: #f8fafc; }
   body { margin: 0 auto; max-width: 46rem; padding: 1rem; line-height: 1.65; }
@@ -21,14 +21,15 @@
 <body>
 <main>
   <h1>Jeux de lettres et de chiffres accessibles</h1>
-  <p>Bienvenue sur cette petite collection de jeux sobre et toute simple, entièrement pensée pour
-     être <strong>parfaitement accessible aux personnes déficientes visuelles</strong> en particulier celles
+  <p>Bienvenue sur cette petite collection de jeux simple à l'ergonomie et l'esthétique très simples.
+    Je l'ai pensée pour être
+     <strong>parfaitement accessible aux personnes déficientes visuelles</strong> en particulier celles
      utilisant des lecteurs d'écran couplés à des plages braille.</p>
   <p>Les deux premiers jeux sont inspirés du célèbre jeu télévisé " des chiffres et des lettres ",
     comme le troisième qui vous propose en 7 manches, alternant tirages de chiffres et de lettres, de vous mesurer 
-    à la machine.
-
-  Les tirages sont générés de façon aléatoire et les solutions sont recherchées de façon dynamique.</p>
+    à la machine : les tirages sont générés de façon aléatoire et les solutions sont recherchées de façon 
+    dynamique.
+    Le quatrième jeu est un jeu de sudoku qui construit des grilles à la volée.</p>
 
   <nav aria-labelledby="titre-jeux">
     <h2 id="titre-jeux">Choisissez un jeu</h2>
@@ -36,6 +37,7 @@
       <li><a href="tirage-de-chiffres.html">Trouver le bon compte</a></li>
       <li><a href="tirage-de-lettres.html">Trouver le mot le plus long</a></li>
       <li><a href="du-bon-compte-au-mot-le-plus-long.html">Du  bon compte au mot le plus long</a></li>
+      <li><a href="sudoku-accessible.html">Sudoku accessible</a></li>
     </ul>
   </nav>
 
@@ -61,6 +63,17 @@
       <strong>« Le mot le plus long »</strong> (tirages de lettres) :
       10 points par manche, 70 points au maximum : le défi, réussir à  égaler l'algorithme !</p>
 
+    <h3>Sudoku accessible</h3>
+    <p>Une grille de 9 × 9 cases, à compléter avec les chiffres 1 à 9 : chacun
+       doit apparaître une seule fois dans chaque ligne, chaque colonne et
+       chaque bloc de 3 × 3. La grille s'affiche ligne par ligne sur
+       13 caractères : les trois blocs d'une ligne sont séparés par « | »,
+       les lignes 4 et 8 par 13 tirets, et chaque case à compléter est marquée
+       d'un tiret « - ». Quatre niveaux selon le nombre de chiffres donnés
+       (40 en Facile, 34 en Moyen, 28 en Difficile, 24 en Expert), chaque
+       grille n'ayant qu'une seule solution. Seuls les chiffres que vous
+       saisissez sont modifiables.</p>
+
   </section>
 
   <section aria-labelledby="titre-licence">
@@ -69,11 +82,6 @@
        <strong>GNU GPL version 3</strong> : vous êtes libres de les utiliser,
        les étudier, les modifier et les redistribuer, sous les conditions de
        cette licence.</p>
-    <p>Pour le jeu « Trouver le mot le plus long », la liste de mots s'appuie
-       sur <strong>Lexique&nbsp;383</strong>, la base lexicale française du
-       projet <strong>OpenLexicon</strong> (New, Pallier &amp; al.),
-       librement réutilisable, filtrée ici par catégories grammaticales et
-       fréquence d'usage.</p>
     <p><small>Conçu et réalisé par GRho.</small></p>
   </section>
 </main>
