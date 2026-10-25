@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sudoku accessible</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #101820; background: #f2f5f9; margin: 0; padding: 1rem 1rem 3rem;
+    line-height: 1.5;
+  }
+  main { max-width: 44rem; margin: 0 auto; }
+  h1 { font-size: 1.55rem; margin: 0 0 0.5rem; }
+  h2 { font-size: 1.15rem; margin: 1.4rem 0 0.5rem; }
+  fieldset { border: 1px solid #c4cedb; border-radius: 8px; padding: 0.8rem 1rem; margin: 0.6rem 0; background: #fff; }
+  legend { font-weight: 700; padding: 0 0.35rem; }
+  label { display: block; margin: 0.35rem 0; }
+  label.inline { display: flex; align-items: center; gap: 0.45rem; }
+  select, button { font: inherit; }
+  select { padding: 0.4rem 0.5rem; }
+  button {
+    padding: 0.45rem 0.95rem; border-radius: 6px; border: 1px solid #24466b;
+    background: #1f6feb; color: #fff; cursor: pointer;
+  }
+  button:hover { background: #1858c4; }
+  button.secondary { background: #fff; color: #1b2a3d; border-color: #5b6b7d; }
+  button.secondary:hover { background: #e9eef5; }
+  .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.4rem 0 0.8rem; }
+  #grid {
+    display: block; width: 100%; max-width: 24rem;
+    font-family: "Cascadia Mono", Consolas, "DejaVu Sans Mono", "Liberation Mono", "Courier New", monospace;
+    font-size: 1.4rem; line-height: 1.5; letter-spacing: 0.08em;
+    padding: 0.65rem 0.8rem; border: 2px solid #2c4a68; border-radius: 6px;
+    background: #fff; color: #000; resize: none; overflow-x: auto;
+  }
+  #status {
+    background: #eaf3ff; border: 1px solid #9cc3ff; border-radius: 6px;
+    padding: 0.55rem 0.8rem; min-height: 2.6em;
+  }
+  #alert {
+    background: #fff3c4; border: 2px solid #a06d00; border-radius: 6px;
+    padding: 0.55rem 0.8rem; margin-top: 0.5rem; font-weight: 600;
+  }
+  #alert:empty { display: none; }
+  #temps { font-weight: 600; font-variant-numeric: tabular-nums; margin: 0.4rem 0 0; }
+  details { margin: 1rem 0; }
+  summary { font-weight: 600; cursor: pointer; }
+  details ul { margin: 0.5rem 0 0; padding-left: 1.4rem; }
+  details li { margin: 0.25rem 0; }
+  #retour { display: inline-block; margin: 0 0 0.6rem; }
+  :focus-visible { outline: 3px solid #ff8c00; outline-offset: 2px; }
+</style>
+</head>
+<body>
+<main>
+<a id="retour" href="index.html">← Retour à l'accueil</a>
+<h1>Sudoku accessible</h1>
+
+<p id="intro">
+  Les cases à compléter sont marquées par un tiret « - » ; les blocs sont séparés
+  par « | » et les lignes 4 et 8 par 13 tirets. Déplacez-vous avec les flèches du
+  clavier ou par clic, puis saisissez un chiffre. Seuls les chiffres que vous
+  saisissez sont modifiables.
+</p>
+
+<details>
+  <summary>Règle du Sudoku</summary>
+  <p>
+    La grille compte 9 lignes et 9 colonnes, soit 81 cases, réparties en neuf blocs
+    de 3 × 3. Le but : remplir toutes les cases vides avec les chiffres 1 à 9, sans
+    jamais les répéter, de sorte que :
+  </p>
+  <ul>
+    <li>chaque ligne contienne une fois, et une seule, chaque chiffre de 1 à 9 ;</li>
+    <li>chaque colonne contienne une fois, et une seule, chaque chiffre de 1 à 9 ;</li>
+    <li>chaque bloc de 3 × 3 contienne une fois, et une seule, chaque chiffre de 1 à 9.</li>
+  </ul>
+  <p>
+    Une grille correcte n'admet qu'une seule solution : les chiffres donnés, ceux
+    que vous ne pouvez pas modifier, suffisent à trouver les autres par déduction,
+    sans jamais deviner.
+  </p>
+</details>
+
+<h2>Commandes</h2>
+<fieldset>
+  <legend>Nouvelle partie</legend>
+  <label for="niveau">Niveau (nombre de chiffres donnés sur la grille)</label>
+  <select id="niveau">
+    <option value="40">Facile — 40 chiffres donnés</option>
+    <option value="34" selected>Moyen — 34 chiffres donnés</option>
+    <option value="28">Difficile — 28 chiffres donnés</option>
+    <option value="24">Expert — 24 chiffres donnés</option>
+  </select>
+  <button id="btn-new" type="button">Nouvelle grille</button>
+</fieldset>
+<fieldset>
+  <legend>Actions</legend>
+  <div class="actions">
+    <button id="btn-check" type="button" class="secondary">Vérifier</button>
+    <button id="btn-clear" type="button" class="secondary">Effacer mes chiffres</button>
+    <button id="btn-solve" type="button" class="secondary">Révéler la solution</button>
+  </div>
+  <label class="inline"><input type="checkbox" id="chk-move" checked>
+    Annoncer la position à chaque déplacement du curseur</label>
+</fieldset>
+
+<p id="status" role="status" aria-label="Message du jeu"></p>
+<div id="alert" role="alert"></div>
+
+<h2>Grille de jeu</h2>
+<textarea id="grid" rows="11" cols="13" wrap="off" spellcheck="false"
+  autocapitalize="off" autocomplete="off" autocorrect="off"
+  aria-label="Grille de sudoku : 11 lignes de 13 caractères. Saisissez les chiffres 1 à 9 dans les cases marquées par un tiret."
+  aria-describedby="intro aide-detail"></textarea>
+
+<p id="temps" role="timer" aria-label="Temps écoulé depuis le début de la grille">Temps : 00:00</p>
+
+<details>
+  <summary>Aide clavier et plage braille</summary>
+  <ul id="aide-detail">
+    <li>Flèches gauche et droite : déplacement caractère par caractère ; en début ou fin de ligne, le curseur passe à la ligne adjacente.</li>
+    <li>Flèches haut et bas, Début et Fin : déplacement vertical ou en début / fin de ligne.</li>
+    <li>Chiffres 1 à 9 : remplissent la case sous le curseur ; saisir un autre chiffre remplace la valeur.</li>
+    <li>Retour arrière : efface la case précédente ; Suppr : efface la case sous le curseur.</li>
+    <li>Les chiffres donnés par la grille, les « | », les espaces et les lignes de tirets ne peuvent pas être modifiés.</li>
+    <li>Clic ou touche de routage de la plage braille : place le curseur sur la case visée.</li>
+    <li>Plage braille : chaque ligne de la grille tient sur 13 cellules ; un affichage de 14 cellules ou plus est recommandé.</li>
+    <li>Le temps écoulé s'affiche sous la grille et démarre à chaque nouvelle grille ; le bouton Vérifier l'annonce aussi.</li>
+    <li>À chaque déplacement, le lecteur d'écran annonce par exemple « ligne 1, colonne 3 : vide » ou « ligne 2, colonne 5 : 7, chiffre fixe ». Ces annonces peuvent être désactivées avec la case à cocher.</li>
+  </ul>
+</details>
+<noscript><p>Cette application nécessite JavaScript.</p></noscript>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Références DOM ----------
+  var ta = document.getElementById('grid');
+  var statusEl = document.getElementById('status');
+  var alertEl = document.getElementById('alert');
+  var selNiveau = document.getElementById('niveau');
+  var chkMove = document.getElementById('chk-move');
+  var btnNew = document.getElementById('btn-new');
+  var btnCheck = document.getElementById('btn-check');
+  var btnClear = document.getElementById('btn-clear');
+  var btnSolve = document.getElementById('btn-solve');
+  var tempsEl = document.getElementById('temps');
+
+  // ---------- Géométrie du format 13 caractères ----------
+  // Lignes texte 1 à 3 (indices 0 à 2) : lignes de grille 1 à 3
+  // Ligne texte 4 (indice 3) : séparateur de 13 tirets, etc.
+  var LINE_LEN = 13;
+  var LINE_STEP = 14;            // 13 caractères + saut de ligne
+  var TOTAL = 11 * LINE_STEP - 1; // 153 caractères au total
+
+  function lineOfRow(r) { return r < 3 ? r : r < 6 ? r + 1 : r + 2; }
+  function rowOfLine(l) { return l < 3 ? l : l < 7 ? l - 1 : l - 2; }
+  function colOfChar(p) { return p < 3 ? p : p < 8 ? p - 2 : p - 4; }
+  function isSepLine(l) { return l === 3 || l === 7; }
+
+  // Analyse de la position du curseur dans le textarea
+  function infoAt(o) {
+    o = Math.max(0, Math.min(TOTAL, o));
+    var line = Math.floor(o / LINE_STEP);
+    var pos = o % LINE_STEP;
+    if (pos === LINE_LEN) return { kind: 'end', line: line };
+    if (isSepLine(line)) return { kind: 'sep', line: line, pos: pos };
+    if (pos === 3 || pos === 8) return { kind: 'vbar', line: line, pos: pos };
+    if (pos === 4 || pos === 9) return { kind: 'space', line: line, pos: pos };
+    var row = rowOfLine(line);
+    var col = colOfChar(pos);
+    return { kind: 'cell', idx: row * 9 + col, row: row, col: col, line: line, pos: pos };
+  }
+
+  // ---------- État du jeu ----------
+  var solution = []; // 81 chiffres de la solution
+  var given = [];    // 81 booléens : chiffre fixé par la grille
+  var values = [];   // 81 : '1'..'9' saisi, sinon null
+  var gameOver = false;
+  var suppressFocusAnnounce = false;
+  var skipMoveAnnounce = false;
+
+  function countEmpty() {
+    var n = 0;
+    for (var i = 0; i < 81; i++) if (!values[i]) n++;
+    return n;
+  }
+
+  function render() {
+    var lines = [];
+    for (var r = 0; r < 9; r++) {
+      if (r === 3 || r === 6) lines.push('-------------');
+      var s = '';
+      for (var c = 0; c < 9; c++) {
+        if (c === 3 || c === 6) s += '| ';
+        s += values[r * 9 + c] || '-';
+      }
+      lines.push(s);
+    }
+    ta.value = lines.join('\n');
+  }
+
+  // ---------- Annonces lecteur d'écran ----------
+  var statusTimer = null, alertTimer = null;
+  function announce(msg, urgent) {
+    var el = urgent ? alertEl : statusEl;
+    el.textContent = '';
+    if (urgent) {
+      window.clearTimeout(alertTimer);
+      alertTimer = window.setTimeout(function () { alertEl.textContent = msg; }, 30);
+    } else {
+      window.clearTimeout(statusTimer);
+      statusTimer = window.setTimeout(function () { statusEl.textContent = msg; }, 30);
+    }
+  }
+
+  function describeAt(o) {
+    var i = infoAt(o);
+    switch (i.kind) {
+      case 'end': return 'fin de ligne ' + (i.line + 1) + '.';
+      case 'sep': return 'ligne de séparation horizontale.';
+      case 'vbar': return 'séparateur vertical entre blocs.';
+      case 'space': return 'espace.';
+      default:
+        var base = 'ligne ' + (i.row + 1) + ', colonne ' + (i.col + 1) + ' : ';
+        if (given[i.idx]) return base + values[i.idx] + ', chiffre fixe.';
+        return base + (values[i.idx] ? values[i.idx] + '.' : 'vide.');
+    }
+  }
+
+  function announcePosition() {
+    if (chkMove.checked) announce(describeAt(ta.selectionStart));
+  }
+
+  function cellName(i) {
+    return 'ligne ' + (Math.floor(i / 9) + 1) + ', colonne ' + (i % 9 + 1);
+  }
+
+  // ---------- Compteur de temps ----------
+  var startTime = 0, timerId = null, elapsedFinal = 0;
+  function fmtTime(s) {
+    var m = Math.floor(s / 60), r = s % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (r < 10 ? '0' : '') + r;
+  }
+  function elapsedSec() {
+    return timerId !== null ? Math.floor((Date.now() - startTime) / 1000) : elapsedFinal;
+  }
+  function startTimer() {
+    stopTimer();
+    startTime = Date.now();
+    elapsedFinal = 0;
+    tempsEl.textContent = 'Temps : 00:00';
+    timerId = window.setInterval(function () {
+      tempsEl.textContent = 'Temps : ' + fmtTime(elapsedSec());
+    }, 1000);
+  }
+  function stopTimer() {
+    if (timerId !== null) {
+      elapsedFinal = Math.floor((Date.now() - startTime) / 1000);
+      tempsEl.textContent = 'Temps : ' + fmtTime(elapsedFinal);
+      window.clearInterval(timerId);
+      timerId = null;
+    }
+  }
+
+  // ---------- Génération de grilles ----------
+  var ROWI = new Array(81), COLI = new Array(81), BOXI = new Array(81);
+  (function () {
+    for (var i = 0; i < 81; i++) {
+      var r = Math.floor(i / 9), c = i % 9;
+      ROWI[i] = r; COLI[i] = c; BOXI[i] = Math.floor(r / 3) * 3 + Math.floor(c / 3);
+    }
+  })();
+
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function candidates(g, i) {
+    var used = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    for (var j = 0; j < 81; j++) {
+      if (j !== i && g[j] &&
+          (ROWI[j] === ROWI[i] || COLI[j] === COLI[i] || BOXI[j] === BOXI[i])) used[g[j]] = 1;
+    }
+    var out = [];
+    for (var d = 1; d <= 9; d++) if (!used[d]) out.push(d);
+    return out;
+  }
+
+  function generateSolution() {
+    var g = new Array(81).fill(0);
+    function fill(i) {
+      if (i === 81) return true;
+      var cands = shuffle(candidates(g, i));
+      for (var k = 0; k < cands.length; k++) {
+        g[i] = cands[k];
+        if (fill(i + 1)) return true;
+      }
+      g[i] = 0;
+      return false;
+    }
+    fill(0);
+    return g;
+  }
+
+  // Compte les solutions jusqu'à la limite (2 suffit pour tester l'unicité)
+  function countSolutions(g, limit) {
+    var count = 0;
+    function solve() {
+      var best = -1, bestC = null;
+      for (var i = 0; i < 81; i++) {
+        if (g[i] !== 0) continue;
+        var c = candidates(g, i);
+        if (c.length === 0) return false;
+        if (!bestC || c.length < bestC.length) {
+          best = i; bestC = c;
+          if (c.length === 1) break;
+        }
+      }
+      if (best === -1) { count++; return count >= limit; }
+      for (var k = 0; k < bestC.length; k++) {
+        g[best] = bestC[k];
+        if (solve()) { g[best] = 0; return true; }
+        g[best] = 0;
+      }
+      return false;
+    }
+    solve();
+    return count;
+  }
+
+  function makePuzzle(sol, target) {
+    var p = sol.slice();
+    var order = [];
+    for (var q = 0; q < 81; q++) order.push(q);
+    shuffle(order);
+    var givens = 81;
+    for (var k = 0; k < order.length; k++) {
+      if (givens <= target) break;
+      var i = order[k];
+      var back = p[i];
+      p[i] = 0;
+      if (countSolutions(p.slice(), 2) !== 1) p[i] = back;
+      else givens--;
+    }
+    return { puzzle: p, givens: givens };
+  }
+
+  // ---------- Saisie contrôlée ----------
+  ta.addEventListener('beforeinput', function (e) {
+    e.preventDefault(); // toute modification passe par ce gestionnaire
+    if (ta.selectionStart !== ta.selectionEnd) {
+      announce('Saisie sur une sélection : non prise en charge.');
+      return;
+    }
+    if (!solution.length) return;
+    var start = ta.selectionStart;
+    var t = e.inputType;
+
+    // --- Saisie d'un chiffre ---
+    if (t === 'insertText' && e.data && /^[1-9]$/.test(e.data)) {
+      if (gameOver) { announce('Partie terminée : lancez une nouvelle grille pour rejouer.'); return; }
+      var info = infoAt(start);
+      if (info.kind !== 'cell') { announce('Aucune case visée : ' + describeAt(start)); return; }
+      if (given[info.idx]) {
+        announce('ligne ' + (info.row + 1) + ', colonne ' + (info.col + 1) + ' : ' +
+                 values[info.idx] + ', chiffre fixe non modifiable.');
+        return;
+      }
+      values[info.idx] = e.data;
+      render();
+      ta.setSelectionRange(start, start);
+      var rest = countEmpty();
+      var msg = 'ligne ' + (info.row + 1) + ', colonne ' + (info.col + 1) + ' : ' + e.data + '.' +
+        (rest > 0
+          ? ' ' + rest + ' case' + (rest > 1 ? 's' : '') + ' restante' + (rest > 1 ? 's' : '') + '.'
+          : ' Grille complète.');
+      announce(msg);
+      skipMoveAnnounce = true;
+      if (rest === 0) onFinish();
+      return;
+    }
+
+    // --- Retour arrière ---
+    if (t === 'deleteContentBackward') {
+      if (gameOver) { announce('Partie terminée.'); return; }
+      if (start === 0) return;
+      var back = start - 1;
+      var ib = infoAt(back);
+      if (ib.kind === 'cell' && !given[ib.idx] && values[ib.idx]) {
+        values[ib.idx] = null;
+        render();
+        ta.setSelectionRange(start, start);
+        var restB = countEmpty();
+        announce('ligne ' + (ib.row + 1) + ', colonne ' + (ib.col + 1) + ' effacée. ' +
+                 restB + ' case' + (restB > 1 ? 's' : '') + ' restante' + (restB > 1 ? 's' : '') + '.');
+        skipMoveAnnounce = true;
+      } else {
+        ta.setSelectionRange(back, back); // case vide, fixe ou séparateur : simple déplacement
+      }
+      return;
+    }
+
+    // --- Suppr ---
+    if (t === 'deleteContentForward') {
+      if (gameOver) { announce('Partie terminée.'); return; }
+      if (start >= TOTAL) return;
+      var inf = infoAt(start);
+      if (inf.kind === 'cell' && !given[inf.idx] && values[inf.idx]) {
+        values[inf.idx] = null;
+        render();
+        ta.setSelectionRange(start, start);
+        var restD = countEmpty();
+        announce('ligne ' + (inf.row + 1) + ', colonne ' + (inf.col + 1) + ' effacée. ' +
+                 restD + ' case' + (restD > 1 ? 's' : '') + ' restante' + (restD > 1 ? 's' : '') + '.');
+        skipMoveAnnounce = true;
+      } else {
+        var fwd = Math.min(start + 1, TOTAL);
+        ta.setSelectionRange(fwd, fwd);
+      }
+      return;
+    }
+    // Tout le reste (coller, saut de ligne, etc.) est bloqué silencieusement.
+  });
+
+  // Annonce de position après navigation clavier ou clic
+  var NAV_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+                  'Home', 'End', 'PageUp', 'PageDown', 'Backspace', 'Delete'];
+  ta.addEventListener('keyup', function (e) {
+    if (NAV_KEYS.indexOf(e.key) === -1) return;
+    if (skipMoveAnnounce) { skipMoveAnnounce = false; return; }
+    announcePosition();
+  });
+  ta.addEventListener('mousedown', function () { suppressFocusAnnounce = true; });
+  ta.addEventListener('focus', function () {
+    if (suppressFocusAnnounce) { suppressFocusAnnounce = false; return; }
+    announcePosition();
+  });
+  ta.addEventListener('mouseup', function () {
+    suppressFocusAnnounce = false;
+    announcePosition();
+  });
+  ['dragover', 'drop'].forEach(function (ev) {
+    ta.addEventListener(ev, function (e) { e.preventDefault(); });
+  });
+
+  // ---------- Fin de partie ----------
+  function onFinish() {
+    var errors = [];
+    for (var i = 0; i < 81; i++) if (values[i] !== String(solution[i])) errors.push(i);
+    if (errors.length === 0) {
+      gameOver = true;
+      stopTimer();
+      announce('Félicitations ! Grille complétée sans aucune erreur en ' + fmtTime(elapsedFinal) + '.', true);
+    } else {
+      var e0 = errors[0];
+      announce('Grille complète, mais ' + errors.length + ' erreur' + (errors.length > 1 ? 's' : '') +
+        '. Par exemple ' + cellName(e0) + '. Utilisez le bouton Vérifier pour la liste complète.');
+    }
+  }
+
+  // ---------- Boutons ----------
+  btnCheck.addEventListener('click', function () {
+    if (!solution.length) return;
+    if (gameOver) { announce('Partie terminée : lancez une nouvelle grille pour rejouer.'); return; }
+    var errors = [], empties = 0;
+    for (var i = 0; i < 81; i++) {
+      if (!values[i]) empties++;
+      else if (values[i] !== String(solution[i])) errors.push(i);
+    }
+    if (errors.length === 0 && empties === 0) {
+      gameOver = true;
+      stopTimer();
+      suppressFocusAnnounce = true;
+      ta.focus();
+      announce('Félicitations ! Grille complétée sans aucune erreur en ' + fmtTime(elapsedFinal) + '.', true);
+      return;
+    }
+    var msg;
+    if (errors.length === 0) {
+      msg = 'Aucune erreur. ' + empties + ' case' + (empties > 1 ? 's' : '') + ' à compléter.';
+    } else {
+      var list = errors.slice(0, 8).map(cellName).join(' ; ');
+      if (errors.length > 8) list += '…';
+      msg = errors.length + ' erreur' + (errors.length > 1 ? 's' : '') + ' : ' + list + '. ';
+      if (empties > 0) msg += empties + ' case' + (empties > 1 ? 's' : '') + ' encore vide' + (empties > 1 ? 's' : '') + '.';
+      else msg += 'Grille complète : corrigez les erreurs signalées.';
+    }
+    msg += ' Temps écoulé : ' + fmtTime(elapsedSec()) + '.';
+    suppressFocusAnnounce = true;
+    ta.focus();
+    announce(msg);
+  });
+
+  btnClear.addEventListener('click', function () {
+    if (!solution.length) return;
+    if (gameOver) { announce('Partie terminée.'); return; }
+    var n = 0;
+    for (var i = 0; i < 81; i++) {
+      if (!given[i] && values[i]) { values[i] = null; n++; }
+    }
+    render();
+    suppressFocusAnnounce = true;
+    ta.focus();
+    announce(n > 0
+      ? 'Vos ' + n + ' chiffre' + (n > 1 ? 's' : '') + ' ont été effacés.'
+      : 'Aucun chiffre saisi par vous pour le moment.');
+  });
+
+  var solveArmedAt = 0;
+  btnSolve.addEventListener('click', function () {
+    if (!solution.length) return;
+    if (gameOver) { announce('Partie terminée : lancez une nouvelle grille pour rejouer.'); return; }
+    var now = Date.now();
+    if (now - solveArmedAt > 5000) {
+      solveArmedAt = now;
+      announce('Révéler la solution termine la partie. Appuyez de nouveau sur le bouton dans les 5 secondes pour confirmer.');
+      return;
+    }
+    solveArmedAt = 0;
+    for (var i = 0; i < 81; i++) values[i] = String(solution[i]);
+    gameOver = true;
+    stopTimer();
+    render();
+    ta.setSelectionRange(0, 0);
+    suppressFocusAnnounce = true;
+    ta.focus();
+    announce('Solution révélée : la grille est complétée. Lancez une nouvelle grille pour rejouer.', true);
+  });
+
+  // ---------- Nouvelle grille ----------
+  function newGame(focusGrid) {
+    var target = parseInt(selNiveau.value, 10);
+    var label = selNiveau.options[selNiveau.selectedIndex].textContent.split(' — ')[0];
+    announce('Génération de la grille ' + label.toLowerCase() + ' en cours…');
+    window.setTimeout(function () {
+      var sol = generateSolution();
+      var res = makePuzzle(sol, target);
+      solution = sol;
+      given = res.puzzle.map(function (d) { return d > 0; });
+      values = res.puzzle.map(function (d) { return d > 0 ? String(d) : null; });
+      gameOver = false;
+      render();
+      startTimer();
+      if (focusGrid) {
+        suppressFocusAnnounce = true;
+        ta.focus();
+      }
+      ta.setSelectionRange(0, 0);
+      announce('Grille ' + label.toLowerCase() + ' prête : ' + res.givens +
+        ' chiffres donnés, ' + (81 - res.givens) + ' cases à trouver.' +
+        (focusGrid ? ' Curseur placé au début de la grille.' : ''));
+    }, 60);
+  }
+
+  btnNew.addEventListener('click', function () { newGame(true); });
+
+  // ---------- Démarrage ----------
+  render();          // grille de tirets le temps de la première génération
+  newGame(false);   // pas de vol de focus au chargement de la page
+})();
+</script>
+</body>
+</html>
