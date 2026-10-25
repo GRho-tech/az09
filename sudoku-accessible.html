@@ -50,6 +50,10 @@
   details ul { margin: 0.5rem 0 0; padding-left: 1.4rem; }
   details li { margin: 0.25rem 0; }
   #retour { display: inline-block; margin: 0 0 0.6rem; }
+  input[type="file"] { font: inherit; max-width: 100%; margin: 0.2rem 0 0.6rem; }
+  #import-status { background: #eaf3ff; border: 1px solid #9cc3ff; border-radius: 6px;
+    padding: 0.55rem 0.8rem; margin: 0.6rem 0 0; }
+  .actions.bas { margin: 0.6rem 0 1rem; }
   :focus-visible { outline: 3px solid #ff8c00; outline-offset: 2px; }
 </style>
 </head>
@@ -64,6 +68,26 @@
   clavier ou par clic, puis saisissez un chiffre. Seuls les chiffres que vous
   saisissez sont modifiables.
 </p>
+
+<section id="ecran-mode" aria-labelledby="titre-mode">
+<h2 id="titre-mode" tabindex="-1">Choisissez le mode de jeu</h2>
+<fieldset>
+  <legend>Nouvelle grille générée</legend>
+  <label class="inline"><input type="radio" name="niveau" id="nv-facile" value="40"> Facile — 40 chiffres donnés</label>
+  <label class="inline"><input type="radio" name="niveau" id="nv-moyen" value="34" checked> Moyen — 34 chiffres donnés</label>
+  <label class="inline"><input type="radio" name="niveau" id="nv-difficile" value="28"> Difficile — 28 chiffres donnés</label>
+  <label class="inline"><input type="radio" name="niveau" id="nv-expert" value="24"> Expert — 24 chiffres donnés</label>
+  <button id="btn-start" type="button">Commencer la partie</button>
+</fieldset>
+<fieldset>
+  <legend>Jouer avec une grille existante</legend>
+  <label for="file-import">Fichier de grille à importer (.txt)</label>
+  <input type="file" id="file-import" accept=".txt,text/plain">
+  <p id="import-status" role="status" aria-label="Résultat de l'import">
+    La grille doit respecter le format d'affichage (11 lignes : 9 lignes de
+    13 caractères et 2 lignes de 13 tirets) et admettre une solution unique.
+  </p>
+</fieldset>
 
 <details>
   <summary>Règle du Sudoku</summary>
@@ -83,34 +107,12 @@
     sans jamais deviner.
   </p>
 </details>
+</section>
 
-<h2>Commandes</h2>
-<fieldset>
-  <legend>Nouvelle partie</legend>
-  <label for="niveau">Niveau (nombre de chiffres donnés sur la grille)</label>
-  <select id="niveau">
-    <option value="40">Facile — 40 chiffres donnés</option>
-    <option value="34" selected>Moyen — 34 chiffres donnés</option>
-    <option value="28">Difficile — 28 chiffres donnés</option>
-    <option value="24">Expert — 24 chiffres donnés</option>
-  </select>
-  <button id="btn-new" type="button">Nouvelle grille</button>
-</fieldset>
-<fieldset>
-  <legend>Actions</legend>
-  <div class="actions">
-    <button id="btn-check" type="button" class="secondary">Vérifier</button>
-    <button id="btn-clear" type="button" class="secondary">Effacer mes chiffres</button>
-    <button id="btn-solve" type="button" class="secondary">Révéler la solution</button>
-  </div>
-  <label class="inline"><input type="checkbox" id="chk-move" checked>
-    Annoncer la position à chaque déplacement du curseur</label>
-</fieldset>
-
+<section id="ecran-jeu" hidden aria-labelledby="titre-jeu">
+<h2 id="titre-jeu" tabindex="-1">Grille de jeu</h2>
 <p id="status" role="status" aria-label="Message du jeu"></p>
 <div id="alert" role="alert"></div>
-
-<h2>Grille de jeu</h2>
 <textarea id="grid" rows="11" cols="13" wrap="off" spellcheck="false"
   autocapitalize="off" autocomplete="off" autocorrect="off"
   aria-label="Grille de sudoku : 11 lignes de 13 caractères. Saisissez les chiffres 1 à 9 dans les cases marquées par un tiret."
@@ -118,20 +120,43 @@
 
 <p id="temps" role="timer" aria-label="Temps écoulé depuis le début de la grille">Temps : 00:00</p>
 
+<fieldset>
+  <legend>Actions</legend>
+  <div class="actions">
+    <button id="btn-check" type="button" class="secondary">Vérifier</button>
+    <button id="btn-clear" type="button" class="secondary">Effacer mes chiffres</button>
+    <button id="btn-solve" type="button" class="secondary">Révéler la solution</button>
+    <button id="btn-pause" type="button" class="secondary">Pause</button>
+    <button id="btn-new" type="button" class="secondary">Nouvelle grille (même niveau)</button>
+  </div>
+  <label class="inline"><input type="checkbox" id="chk-move" checked>
+    Annoncer la position à chaque déplacement du curseur</label>
+</fieldset>
+
+<div class="actions bas">
+  <button id="btn-export" type="button" class="secondary">Exporter la grille (.txt)</button>
+  <button id="btn-mode" type="button" class="secondary">Retour au choix du mode de jeu</button>
+</div>
+
 <details>
   <summary>Aide clavier et plage braille</summary>
   <ul id="aide-detail">
     <li>Flèches gauche et droite : déplacement caractère par caractère ; en début ou fin de ligne, le curseur passe à la ligne adjacente.</li>
     <li>Flèches haut et bas, Début et Fin : déplacement vertical ou en début / fin de ligne.</li>
     <li>Chiffres 1 à 9 : remplissent la case sous le curseur ; saisir un autre chiffre remplace la valeur.</li>
-    <li>Retour arrière : efface la case précédente ; Suppr : efface la case sous le curseur.</li>
+    <li>Trois façons d'effacer : le tiret « - » ou la touche Suppr effacent la case sous le curseur, le retour arrière efface la case précédente.</li>
     <li>Les chiffres donnés par la grille, les « | », les espaces et les lignes de tirets ne peuvent pas être modifiés.</li>
     <li>Clic ou touche de routage de la plage braille : place le curseur sur la case visée.</li>
     <li>Plage braille : chaque ligne de la grille tient sur 13 cellules ; un affichage de 14 cellules ou plus est recommandé.</li>
     <li>Le temps écoulé s'affiche sous la grille et démarre à chaque nouvelle grille ; le bouton Vérifier l'annonce aussi.</li>
+    <li>Le bouton Pause arrête le minuteur et devient « Fin pause » : le temps déjà écoulé est conservé, et « Fin pause » relance le minuteur.</li>
+    <li>Révéler la solution demande une seconde activation du bouton pour confirmer ; toute autre action de jeu annule la confirmation.</li>
+    <li>Le bouton Exporter la grille enregistre, dans un fichier .txt, la grille à trous telle qu'elle a été proposée (11 lignes au format de la grille, chiffres donnés uniquement) ; vos chiffres saisis ne sont pas exportés.</li>
+    <li>Une grille exportée, ou composée selon ce format, peut être importée depuis l'écran de choix du mode de jeu ; elle doit respecter le format et admettre une solution unique, sinon l'importation est refusée avec un message explicite.</li>
     <li>À chaque déplacement, le lecteur d'écran annonce par exemple « ligne 1, colonne 3 : vide » ou « ligne 2, colonne 5 : 7, chiffre fixe ». Ces annonces peuvent être désactivées avec la case à cocher.</li>
   </ul>
 </details>
+</section>
 <noscript><p>Cette application nécessite JavaScript.</p></noscript>
 </main>
 
@@ -143,12 +168,21 @@
   var ta = document.getElementById('grid');
   var statusEl = document.getElementById('status');
   var alertEl = document.getElementById('alert');
-  var selNiveau = document.getElementById('niveau');
+  var importStatus = document.getElementById('import-status');
+  var ecranMode = document.getElementById('ecran-mode');
+  var ecranJeu = document.getElementById('ecran-jeu');
+  var titreMode = document.getElementById('titre-mode');
+  var titreJeu = document.getElementById('titre-jeu');
   var chkMove = document.getElementById('chk-move');
+  var btnStart = document.getElementById('btn-start');
   var btnNew = document.getElementById('btn-new');
+  var btnMode = document.getElementById('btn-mode');
   var btnCheck = document.getElementById('btn-check');
   var btnClear = document.getElementById('btn-clear');
   var btnSolve = document.getElementById('btn-solve');
+  var btnPause = document.getElementById('btn-pause');
+  var btnExport = document.getElementById('btn-export');
+  var fileImport = document.getElementById('file-import');
   var tempsEl = document.getElementById('temps');
 
   // ---------- Géométrie du format 13 caractères ----------
@@ -184,6 +218,8 @@
   var gameOver = false;
   var suppressFocusAnnounce = false;
   var skipMoveAnnounce = false;
+  var currentLevel = 'grille'; // utilisé pour le nom du fichier exporté
+  var solveArmed = false;     // confirmation en deux temps de « Révéler la solution »
 
   function countEmpty() {
     var n = 0;
@@ -206,17 +242,22 @@
   }
 
   // ---------- Annonces lecteur d'écran ----------
-  var statusTimer = null, alertTimer = null;
-  function announce(msg, urgent) {
-    var el = urgent ? alertEl : statusEl;
+  var annTimers = {};
+  function announceTo(el, msg) {
     el.textContent = '';
-    if (urgent) {
-      window.clearTimeout(alertTimer);
-      alertTimer = window.setTimeout(function () { alertEl.textContent = msg; }, 30);
-    } else {
-      window.clearTimeout(statusTimer);
-      statusTimer = window.setTimeout(function () { statusEl.textContent = msg; }, 30);
-    }
+    if (annTimers[el.id]) window.clearTimeout(annTimers[el.id]);
+    annTimers[el.id] = window.setTimeout(function () { el.textContent = msg; }, 30);
+  }
+  function announce(msg, urgent) {
+    announceTo(urgent ? alertEl : statusEl, msg);
+  }
+
+  // ---------- Écrans (1 : choix du mode, 2 : grille de jeu) ----------
+  function showEcran(mode, focusTitre) {
+    var jeu = mode === 'jeu';
+    ecranMode.hidden = jeu;
+    ecranJeu.hidden = !jeu;
+    if (focusTitre) (jeu ? titreJeu : titreMode).focus();
   }
 
   function describeAt(o) {
@@ -242,30 +283,39 @@
   }
 
   // ---------- Compteur de temps ----------
-  var startTime = 0, timerId = null, elapsedFinal = 0;
+  var startTime = 0, timerId = null, elapsedBase = 0;
   function fmtTime(s) {
     var m = Math.floor(s / 60), r = s % 60;
     return (m < 10 ? '0' : '') + m + ':' + (r < 10 ? '0' : '') + r;
   }
   function elapsedSec() {
-    return timerId !== null ? Math.floor((Date.now() - startTime) / 1000) : elapsedFinal;
+    return elapsedBase + (timerId !== null ? Math.floor((Date.now() - startTime) / 1000) : 0);
   }
-  function startTimer() {
-    stopTimer();
+  function tick() {
+    tempsEl.textContent = 'Temps : ' + fmtTime(elapsedSec());
+  }
+  function resumeTick() {
     startTime = Date.now();
-    elapsedFinal = 0;
-    tempsEl.textContent = 'Temps : 00:00';
-    timerId = window.setInterval(function () {
-      tempsEl.textContent = 'Temps : ' + fmtTime(elapsedSec());
-    }, 1000);
+    timerId = window.setInterval(tick, 1000);
   }
-  function stopTimer() {
+  function pauseTimer() {
     if (timerId !== null) {
-      elapsedFinal = Math.floor((Date.now() - startTime) / 1000);
-      tempsEl.textContent = 'Temps : ' + fmtTime(elapsedFinal);
+      elapsedBase = elapsedSec();
       window.clearInterval(timerId);
       timerId = null;
+      tick(); // affichage figé sur le temps exact au moment de la pause
     }
+  }
+  function startTimer() {
+    pauseTimer();
+    elapsedBase = 0;
+    tempsEl.textContent = 'Temps : 00:00';
+    btnPause.textContent = 'Pause';
+    resumeTick();
+  }
+  function stopTimer() {
+    pauseTimer();
+    btnPause.textContent = 'Pause';
   }
 
   // ---------- Génération de grilles ----------
@@ -366,8 +416,8 @@
     var start = ta.selectionStart;
     var t = e.inputType;
 
-    // --- Saisie d'un chiffre ---
-    if (t === 'insertText' && e.data && /^[1-9]$/.test(e.data)) {
+    // --- Saisie d'un chiffre, ou d'un tiret « - » pour effacer ---
+    if (t === 'insertText' && e.data && /^[1-9-]$/.test(e.data)) {
       if (gameOver) { announce('Partie terminée : lancez une nouvelle grille pour rejouer.'); return; }
       var info = infoAt(start);
       if (info.kind !== 'cell') { announce('Aucune case visée : ' + describeAt(start)); return; }
@@ -376,7 +426,24 @@
                  values[info.idx] + ', chiffre fixe non modifiable.');
         return;
       }
+      // Tiret « - » : efface le chiffre saisi sous le curseur
+      if (e.data === '-') {
+        if (values[info.idx]) {
+          values[info.idx] = null;
+          solveArmed = false;
+          render();
+          ta.setSelectionRange(start, start);
+          var restT = countEmpty();
+          announce('ligne ' + (info.row + 1) + ', colonne ' + (info.col + 1) + ' effacée. ' +
+                   restT + ' case' + (restT > 1 ? 's' : '') + ' restante' + (restT > 1 ? 's' : '') + '.');
+          skipMoveAnnounce = true;
+        } else {
+          announce('ligne ' + (info.row + 1) + ', colonne ' + (info.col + 1) + ' : déjà vide.');
+        }
+        return;
+      }
       values[info.idx] = e.data;
+      solveArmed = false;
       render();
       ta.setSelectionRange(start, start);
       var rest = countEmpty();
@@ -398,6 +465,7 @@
       var ib = infoAt(back);
       if (ib.kind === 'cell' && !given[ib.idx] && values[ib.idx]) {
         values[ib.idx] = null;
+        solveArmed = false;
         render();
         ta.setSelectionRange(start, start);
         var restB = countEmpty();
@@ -417,6 +485,7 @@
       var inf = infoAt(start);
       if (inf.kind === 'cell' && !given[inf.idx] && values[inf.idx]) {
         values[inf.idx] = null;
+        solveArmed = false;
         render();
         ta.setSelectionRange(start, start);
         var restD = countEmpty();
@@ -460,7 +529,7 @@
     if (errors.length === 0) {
       gameOver = true;
       stopTimer();
-      announce('Félicitations ! Grille complétée sans aucune erreur en ' + fmtTime(elapsedFinal) + '.', true);
+      announce('Félicitations ! Grille complétée sans aucune erreur en ' + fmtTime(elapsedSec()) + '.', true);
     } else {
       var e0 = errors[0];
       announce('Grille complète, mais ' + errors.length + ' erreur' + (errors.length > 1 ? 's' : '') +
@@ -472,6 +541,7 @@
   btnCheck.addEventListener('click', function () {
     if (!solution.length) return;
     if (gameOver) { announce('Partie terminée : lancez une nouvelle grille pour rejouer.'); return; }
+    solveArmed = false;
     var errors = [], empties = 0;
     for (var i = 0; i < 81; i++) {
       if (!values[i]) empties++;
@@ -482,7 +552,7 @@
       stopTimer();
       suppressFocusAnnounce = true;
       ta.focus();
-      announce('Félicitations ! Grille complétée sans aucune erreur en ' + fmtTime(elapsedFinal) + '.', true);
+      announce('Félicitations ! Grille complétée sans aucune erreur en ' + fmtTime(elapsedSec()) + '.', true);
       return;
     }
     var msg;
@@ -504,6 +574,7 @@
   btnClear.addEventListener('click', function () {
     if (!solution.length) return;
     if (gameOver) { announce('Partie terminée.'); return; }
+    solveArmed = false;
     var n = 0;
     for (var i = 0; i < 81; i++) {
       if (!given[i] && values[i]) { values[i] = null; n++; }
@@ -516,17 +587,33 @@
       : 'Aucun chiffre saisi par vous pour le moment.');
   });
 
-  var solveArmedAt = 0;
+  // Pause / reprise du minuteur
+  btnPause.addEventListener('click', function () {
+    if (!solution.length) { announce('Aucune partie en cours.'); return; }
+    if (gameOver) { announce('Partie terminée : lancez une nouvelle grille pour rejouer.'); return; }
+    solveArmed = false;
+    if (timerId !== null) {
+      pauseTimer();
+      btnPause.textContent = 'Fin pause';
+      announce('Pause. Temps écoulé : ' + fmtTime(elapsedSec()) + '.');
+    } else {
+      resumeTick();
+      btnPause.textContent = 'Pause';
+      announce('Reprise du jeu. Temps écoulé : ' + fmtTime(elapsedSec()) + '.');
+    }
+  });
+
+  // La confirmation en deux temps n'a pas de limite de durée : le second clic
+  // révèle, quelle que soit l'attente ; toute autre action de jeu l'annule.
   btnSolve.addEventListener('click', function () {
     if (!solution.length) return;
     if (gameOver) { announce('Partie terminée : lancez une nouvelle grille pour rejouer.'); return; }
-    var now = Date.now();
-    if (now - solveArmedAt > 5000) {
-      solveArmedAt = now;
-      announce('Révéler la solution termine la partie. Appuyez de nouveau sur le bouton dans les 5 secondes pour confirmer.');
+    if (!solveArmed) {
+      solveArmed = true;
+      announce('Attention : révéler la solution termine la partie. Appuyez une seconde fois sur le bouton pour confirmer ; toute autre action annule.');
       return;
     }
-    solveArmedAt = 0;
+    solveArmed = false;
     for (var i = 0; i < 81; i++) values[i] = String(solution[i]);
     gameOver = true;
     stopTimer();
@@ -537,11 +624,153 @@
     announce('Solution révélée : la grille est complétée. Lancez une nouvelle grille pour rejouer.', true);
   });
 
+  // ---------- Export / import d'une grille à trous ----------
+  // Texte de la grille à trous : chiffres donnés uniquement, format 11 lignes.
+  function gridText() {
+    var lines = [];
+    for (var r = 0; r < 9; r++) {
+      if (r === 3 || r === 6) lines.push('-------------');
+      var s = '';
+      for (var c = 0; c < 9; c++) {
+        if (c === 3 || c === 6) s += '| ';
+        var i = r * 9 + c;
+        s += given[i] ? String(solution[i]) : '-';
+      }
+      lines.push(s);
+    }
+    return lines.join('\n') + '\n';
+  }
+
+  btnExport.addEventListener('click', function () {
+    if (!solution.length) { announce('Aucune grille à exporter pour le moment.'); return; }
+    var d = new Date();
+    function pad2(n) { return (n < 10 ? '0' : '') + n; }
+    var name = 'sudoku-' + currentLevel + '-' + d.getFullYear() + pad2(d.getMonth() + 1) +
+      pad2(d.getDate()) + '-' + pad2(d.getHours()) + 'h' + pad2(d.getMinutes()) +
+      'm' + pad2(d.getSeconds()) + '.txt';
+    var blob = new Blob([gridText()], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    announce('Grille exportée : ' + name + '. Le fichier contient la grille à trous (11 lignes, chiffres donnés uniquement).');
+  });
+
+  // Renvoie la solution complète d'une grille, ou null si elle n'en admet aucune
+  function solveGrid(g) {
+    var best = -1, bestC = null;
+    for (var i = 0; i < 81; i++) {
+      if (g[i] !== 0) continue;
+      var c = candidates(g, i);
+      if (c.length === 0) return null;
+      if (!bestC || c.length < bestC.length) { best = i; bestC = c; if (c.length === 1) break; }
+    }
+    if (best === -1) return g;
+    for (var k = 0; k < bestC.length; k++) {
+      var g2 = g.slice();
+      g2[best] = bestC[k];
+      var r = solveGrid(g2);
+      if (r) return r;
+    }
+    return null;
+  }
+
+  function importGrid(txt) {
+    var lines = String(txt).replace(/\r/g, '').split('\n');
+    while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
+    if (lines.length !== 11) {
+      announceTo(importStatus, 'Import impossible : le fichier doit contenir exactement 11 lignes (9 lignes de grille et 2 lignes de 13 tirets) ; ' +
+        lines.length + ' ligne' + (lines.length > 1 ? 's' : '') + ' détectée' + (lines.length > 1 ? 's' : '') + '.');
+      return;
+    }
+    var puzzle = [];
+    for (var l = 0; l < 11; l++) {
+      var line = lines[l].replace(/\s+$/, '');
+      if (l === 3 || l === 7) {
+        if (line !== '-------------') {
+          announceTo(importStatus, 'Import impossible : la ligne ' + (l + 1) + ' doit contenir exactement 13 tirets.');
+          return;
+        }
+        continue;
+      }
+      if (!/^[1-9-]{3}\| [1-9-]{3}\| [1-9-]{3}$/.test(line)) {
+        announceTo(importStatus, 'Import impossible : la ligne ' + (l + 1) + ' doit suivre le format « 123| 456| 789 » (13 caractères : chiffres de 1 à 9, ou tirets pour les cases à compléter).');
+        return;
+      }
+      var row = l < 3 ? l : (l < 7 ? l - 1 : l - 2);
+      var digits = line.replace(/[| ]/g, '');
+      for (var c = 0; c < 9; c++) {
+        var ch = digits.charAt(c);
+        puzzle[row * 9 + c] = ch === '-' ? 0 : ch.charCodeAt(0) - 48;
+      }
+    }
+    var holes = 0;
+    for (var i2 = 0; i2 < 81; i2++) if (puzzle[i2] === 0) holes++;
+    if (holes === 0) {
+      announceTo(importStatus, 'Import impossible : cette grille ne contient aucune case à compléter.');
+      return;
+    }
+    // Contrôle des chiffres donnés eux-mêmes : deux fois le même chiffre dans
+    // une ligne, colonne ou bloc rend la grille invalide, même sans case vide
+    // en cause, et le comptage de solutions ne le détecterait pas.
+    var dup = -1;
+    for (var i3 = 0; i3 < 81 && dup === -1; i3++) {
+      if (!puzzle[i3]) continue;
+      for (var j3 = i3 + 1; j3 < 81; j3++) {
+        if (puzzle[j3] === puzzle[i3] &&
+            (ROWI[j3] === ROWI[i3] || COLI[j3] === COLI[i3] || BOXI[j3] === BOXI[i3])) { dup = i3; break; }
+      }
+    }
+    if (dup !== -1) {
+      announceTo(importStatus, 'Import impossible : deux chiffres identiques figurent dans la même ligne, colonne ou le même bloc (par exemple ' + cellName(dup) + ').');
+      return;
+    }
+    var count = countSolutions(puzzle.slice(), 3);
+    if (count === 0) {
+      announceTo(importStatus, 'Import impossible : aucune solution n\'existe pour cette grille, elle comporte une contradiction.');
+      return;
+    }
+    if (count >= 2) {
+      announceTo(importStatus, 'Import impossible : cette grille admet plusieurs solutions ; un sudoku valide doit en avoir une seule.');
+      return;
+    }
+    solution = solveGrid(puzzle.slice());
+    given = puzzle.map(function (d) { return d > 0; });
+    values = puzzle.map(function (d) { return d > 0 ? String(d) : null; });
+    gameOver = false;
+    currentLevel = 'importee';
+    solveArmed = false;
+    render();
+    startTimer();
+    showEcran('jeu', false);
+    suppressFocusAnnounce = true;
+    ta.focus();
+    announce('Grille importée : ' + (81 - holes) + ' chiffres donnés, ' + holes +
+      ' case' + (holes > 1 ? 's' : '') + ' à trouver. Curseur au début de la grille.');
+  }
+
+  fileImport.addEventListener('change', function () {
+    solveArmed = false;
+    var f = fileImport.files && fileImport.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try { importGrid(reader.result); }
+      finally { fileImport.value = ''; }
+    };
+    reader.readAsText(f);
+  });
+
   // ---------- Nouvelle grille ----------
-  function newGame(focusGrid) {
-    var target = parseInt(selNiveau.value, 10);
-    var label = selNiveau.options[selNiveau.selectedIndex].textContent.split(' — ')[0];
-    announce('Génération de la grille ' + label.toLowerCase() + ' en cours…');
+  function newGame() {
+    var niveau = (document.querySelector('input[name="niveau"]:checked') || {}).value || '34';
+    var target = parseInt(niveau, 10);
+    var label = { '40': 'facile', '34': 'moyenne', '28': 'difficile', '24': 'experte' }[niveau] || 'grille';
+    announce('Génération de la grille ' + label + ' en cours…');
     window.setTimeout(function () {
       var sol = generateSolution();
       var res = makePuzzle(sol, target);
@@ -549,24 +778,32 @@
       given = res.puzzle.map(function (d) { return d > 0; });
       values = res.puzzle.map(function (d) { return d > 0 ? String(d) : null; });
       gameOver = false;
+      currentLevel = label;
+      solveArmed = false;
       render();
       startTimer();
-      if (focusGrid) {
-        suppressFocusAnnounce = true;
-        ta.focus();
-      }
       ta.setSelectionRange(0, 0);
-      announce('Grille ' + label.toLowerCase() + ' prête : ' + res.givens +
-        ' chiffres donnés, ' + (81 - res.givens) + ' cases à trouver.' +
-        (focusGrid ? ' Curseur placé au début de la grille.' : ''));
+      suppressFocusAnnounce = true;
+      ta.focus();
+      announce('Grille ' + label + ' prête : ' + res.givens +
+        ' chiffres donnés, ' + (81 - res.givens) + ' cases à trouver. Curseur au début de la grille.');
     }, 60);
   }
 
-  btnNew.addEventListener('click', function () { newGame(true); });
+  btnStart.addEventListener('click', function () {
+    showEcran('jeu', true);
+    newGame();
+  });
+  btnNew.addEventListener('click', function () { newGame(); });
+
+  btnMode.addEventListener('click', function () {
+    stopTimer();
+    solveArmed = false;
+    showEcran('mode', true);
+  });
 
   // ---------- Démarrage ----------
-  render();          // grille de tirets le temps de la première génération
-  newGame(false);   // pas de vol de focus au chargement de la page
+  showEcran('mode', false); // écran 1 : choix du mode de jeu, pas de grille générée
 })();
 </script>
 </body>
