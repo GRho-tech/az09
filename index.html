@@ -4,6 +4,15 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Jeux de chiffres et de lettres accessibles</title>
+
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<meta name="theme-color" content="#1e40af" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="AZ09" />
+
 <style>
   :root { font-family: system-ui, sans-serif; color: #111827; background: #f8fafc; }
   body { margin: 0 auto; max-width: 46rem; padding: 1rem; line-height: 1.65; }
@@ -30,7 +39,7 @@
     comme le troisième qui vous propose en 7 manches, alternant tirages de chiffres et de lettres, de vous mesurer 
     à la machine : les tirages sont générés de façon aléatoire et les solutions sont recherchées de façon 
     dynamique.
-    Le quatrième jeu est un jeu de sudoku qui construit des grilles à la volée.</p>
+    Le quatrième jeu est un jeu de sudoku : construction de grilles à la volée, import/export de grilles, suivi du jeu (vérification, chronomètre).</p>
 
   <nav aria-labelledby="titre-jeux">
     <h2 id="titre-jeux">Choisissez un jeu</h2>
@@ -86,5 +95,11 @@
     <p><small>Conçu et réalisé par GRho.</small></p>
   </section>
 </main>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
 </body>
 </html>

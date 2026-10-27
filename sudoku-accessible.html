@@ -33,7 +33,20 @@
     font-family: "Cascadia Mono", Consolas, "DejaVu Sans Mono", "Liberation Mono", "Courier New", monospace;
     font-size: 1.4rem; line-height: 1.5; letter-spacing: 0.08em;
     padding: 0.65rem 0.8rem; border: 2px solid #2c4a68; border-radius: 6px;
-    background: #fff; color: #000; resize: none; overflow-x: auto;
+    background-color: #fff;
+    /* Bandes de repérage visuel : lignes 4 et 8 (séparateurs horizontaux)
+       et colonnes des « | ». Le contenu texte reste inchangé pour le
+       lecteur d'écran et la plage braille. */
+    background-image:
+      linear-gradient(#c9dcf0, #c9dcf0),
+      linear-gradient(#c9dcf0, #c9dcf0),
+      linear-gradient(90deg, #c9dcf0, #c9dcf0),
+      linear-gradient(90deg, #c9dcf0, #c9dcf0);
+    background-repeat: no-repeat;
+    background-attachment: local;
+    background-size: 100% 1.5em, 100% 1.5em, 1ch 100%, 1ch 100%;
+    background-position: 0 4.5em, 0 10.5em, calc(3ch + 0.24em) 0, calc(8ch + 0.64em) 0;
+    color: #000; resize: none; overflow-x: auto;
   }
   #status {
     background: #eaf3ff; border: 1px solid #9cc3ff; border-radius: 6px;
@@ -64,7 +77,8 @@
 
 <p id="intro">
   Les cases à compléter sont marquées par un tiret « - » ; les blocs sont séparés
-  par « | » et les lignes 4 et 8 par 13 tirets. Déplacez-vous avec les flèches du
+  par « | » et les lignes 4 et 8 par des tirets, chaque « | » étant prolongé
+  par un « + » à l'intersection. Déplacez-vous avec les flèches du
   clavier ou par clic, puis saisissez un chiffre. Seuls les chiffres que vous
   saisissez sont modifiables.
 </p>
@@ -85,7 +99,8 @@
   <input type="file" id="file-import" accept=".txt,text/plain">
   <p id="import-status" role="status" aria-label="Résultat de l'import">
     La grille doit respecter le format d'affichage (11 lignes : 9 lignes de
-    13 caractères et 2 lignes de 13 tirets) et admettre une solution unique.
+    13 caractères et 2 lignes de séparation, avec ou sans « + » aux
+    intersections) et admettre une solution unique.
   </p>
 </fieldset>
 
@@ -187,7 +202,7 @@
 
   // ---------- Géométrie du format 13 caractères ----------
   // Lignes texte 1 à 3 (indices 0 à 2) : lignes de grille 1 à 3
-  // Ligne texte 4 (indice 3) : séparateur de 13 tirets, etc.
+  // Ligne texte 4 (indice 3) : séparateur de tirets, « + » aux intersections, etc.
   var LINE_LEN = 13;
   var LINE_STEP = 14;            // 13 caractères + saut de ligne
   var TOTAL = 11 * LINE_STEP - 1; // 153 caractères au total
@@ -230,7 +245,7 @@
   function render() {
     var lines = [];
     for (var r = 0; r < 9; r++) {
-      if (r === 3 || r === 6) lines.push('-------------');
+      if (r === 3 || r === 6) lines.push('---+----+----');
       var s = '';
       for (var c = 0; c < 9; c++) {
         if (c === 3 || c === 6) s += '| ';
@@ -629,7 +644,7 @@
   function gridText() {
     var lines = [];
     for (var r = 0; r < 9; r++) {
-      if (r === 3 || r === 6) lines.push('-------------');
+      if (r === 3 || r === 6) lines.push('---+----+----');
       var s = '';
       for (var c = 0; c < 9; c++) {
         if (c === 3 || c === 6) s += '| ';
@@ -683,7 +698,7 @@
     var lines = String(txt).replace(/\r/g, '').split('\n');
     while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
     if (lines.length !== 11) {
-      announceTo(importStatus, 'Import impossible : le fichier doit contenir exactement 11 lignes (9 lignes de grille et 2 lignes de 13 tirets) ; ' +
+      announceTo(importStatus, 'Import impossible : le fichier doit contenir exactement 11 lignes (9 lignes de grille et 2 lignes de séparation) ; ' +
         lines.length + ' ligne' + (lines.length > 1 ? 's' : '') + ' détectée' + (lines.length > 1 ? 's' : '') + '.');
       return;
     }
@@ -691,8 +706,8 @@
     for (var l = 0; l < 11; l++) {
       var line = lines[l].replace(/\s+$/, '');
       if (l === 3 || l === 7) {
-        if (line !== '-------------') {
-          announceTo(importStatus, 'Import impossible : la ligne ' + (l + 1) + ' doit contenir exactement 13 tirets.');
+        if (line !== '---+----+----' && line !== '-------------') {
+          announceTo(importStatus, 'Import impossible : la ligne ' + (l + 1) + ' doit être une ligne de séparation : 13 tirets, ou 11 tirets avec deux « + » alignés sur les barres verticales.');
           return;
         }
         continue;
