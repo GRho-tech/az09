@@ -587,34 +587,49 @@ function statutDic(texte) {
 }
 
 /* Prépare le dictionnaire embarqué : découpe DIC_TEXTE, normalise chaque
-   mot (accents, ligatures…), ne garde que les mots de 2 à 10 lettres,
-   dédoublonne, indexe et affiche le nombre de mots chargés. */
+   mot (accents, ligatures…) en gardant la graphie d'origine de chaque
+   forme unique, ne garde que les mots de 2 à 10 lettres, dédoublonne,
+   indexe et affiche le nombre de mots chargés.
+   Le chargement se fait par tranches de 5 000 mots rendues à setTimeout :
+   la page reste réactive et l'accueil s'affiche immédiatement, même
+   pendant le chargement. « Commencer la partie » est désactivé jusqu'à
+   la fin du chargement, pour ne pas jouer avec un dictionnaire vide. */
+let dicoPret = false;                 // true dès que le dictionnaire est prêt
 function chargerDictionnaire() {
-  try {
-    statutDic("Chargement du dictionnaire…");
-    const mots = DIC_TEXTE.trim().split(/\s+/);
-    const normalises = [];
-    for (let i = 0; i < mots.length; i += 5000) {
-      for (const m of mots.slice(i, i + 5000)) {
-        const n = normaliser(m);
-        if (n.length >= 2 && n.length <= 10) normalises.push(n);
+  statutDic("Chargement du dictionnaire…");
+  document.getElementById("commencer").disabled = true; // inactif pendant le chargement
+  const mots = DIC_TEXTE.trim().split(/\s+/);         // découpage
+  const vus = {};                                     // forme normalisée → graphie d'origine
+  const normalises = [];                              // formes uniques, dans l'ordre de rencontre
+  let i = 0;
+  function tranche() {
+    try {
+      const fin = Math.min(i + 5000, mots.length);    // 5 000 mots par rendement
+      for (; i < fin; i++) {
+        const n = normaliser(mots[i]);                // normalisation
+        if (n.length >= 2 && n.length <= 10) {        // filtre
+          if (!vus[n]) {                              // dédoublonnage
+            vus[n] = mots[i];                         // graphie d'origine gardée
+            normalises.push(n);
+          }
+        }
       }
+      if (i < mots.length) { setTimeout(tranche, 0); return; } // laisse respirer la page
+      DICTIONNAIRE = normalises;
+      formesOriginales = vus;                         // pour l'affichage (école…)
+      indexerDictionnaire();                          // indexation
+      dicoPret = true;
+      document.getElementById("commencer").disabled = false; // partie possible
+      statutDic("Dictionnaire chargé : " + DICTIONNAIRE.length.toLocaleString("fr-FR")
+        + " formes jouables, issues de " + mots.length.toLocaleString("fr-FR") + " mots.");
+    } catch (e) {                                      // en cas d'erreur
+      DICTIONNAIRE = [];
+      formesOriginales = {};                           // aucune graphie d'origine
+      indexerDictionnaire();
+      statutDic("Erreur de chargement du dictionnaire (" + e.message + ").");
     }
-    DICTIONNAIRE = Array.from(new Set(normalises));
-    formesOriginales = {};
-    for (const m of mots) {
-      const n = normaliser(m);
-      if (n.length >= 2 && n.length <= 10 && !formesOriginales[n]) formesOriginales[n] = m;
-    }
-    indexerDictionnaire();
-    statutDic("Dictionnaire chargé : " + DICTIONNAIRE.length.toLocaleString("fr-FR")
-      + " formes jouables, issues de " + mots.length.toLocaleString("fr-FR") + " mots.");
-  } catch (e) {
-    DICTIONNAIRE = [];
-    formesOriginales = {};
-    indexerDictionnaire();
-    statutDic("Erreur de chargement du dictionnaire (" + e.message + ").");
   }
+  tranche();
 }
 
 let tirage = [];             // les 10 lettres du tirage en cours
@@ -1445,6 +1460,10 @@ function demarrerPartie() {
 }
 
 function commencerPartie() {
+  if (!dicoPret) {                      // dictionnaire encore en chargement
+    statutDic("Le dictionnaire finit de se charger, réessayez dans un instant.");
+    return;
+  }
   lireReglages();
   demarrerPartie();
 }
@@ -1505,10 +1524,11 @@ function retourAccueil() {
 document.getElementById("commencer").addEventListener("click", commencerPartie);
 document.getElementById("rejouer").addEventListener("click", retourAccueil);
 
-/* Chargement de la page : dictionnaire embarqué puis accueil. */
+/* Chargement de la page : l'accueil s'affiche immédiatement, puis le
+   dictionnaire se charge en tâche de fond sans jamais figer la page. */
 try {
-  chargerDictionnaire();
   montrerVue("vue-accueil");
+  chargerDictionnaire();
 } catch (e) {
   statutDic("Erreur au démarrage : " + e.message);
 }
