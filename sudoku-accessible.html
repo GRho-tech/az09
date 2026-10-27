@@ -35,8 +35,9 @@
     padding: 0.65rem 0.8rem; border: 2px solid #2c4a68; border-radius: 6px;
     background-color: #fff;
     /* Bandes de repérage visuel : lignes 4 et 8 (séparateurs horizontaux)
-       et colonnes des « | ». Le contenu texte reste inchangé pour le
-       lecteur d'écran et la plage braille. */
+       et colonnes des « | ». Positions ch/em de repli uniquement : le script
+       les remplace au chargement par des positions mesurées. Le contenu
+       texte reste inchangé pour le lecteur d'écran et la plage braille. */
     background-image:
       linear-gradient(#c9dcf0, #c9dcf0),
       linear-gradient(#c9dcf0, #c9dcf0),
@@ -816,6 +817,49 @@
     solveArmed = false;
     showEcran('mode', true);
   });
+
+  // ---------- Bandes de repérage visuel : mesure exacte ----------
+  // Les positions déclarées en CSS (unités ch) ne sont qu'un repli : selon
+  // la police réellement disponible, elles peuvent glisser d'une cellule.
+  // On mesure ici la position réelle des « | » avec la même police que la
+  // grille (élément sonde invisible), puis on replace les bandes de fond
+  // en pixels, alignées sur le rendu réel.
+  function px(n) { return Math.round(n * 100) / 100; }
+  function updateBands() {
+    if (typeof getComputedStyle !== 'function') return;
+    var cs = getComputedStyle(ta);
+    var probe = document.createElement('div');
+    probe.style.position = 'absolute';
+    probe.style.visibility = 'hidden';
+    probe.style.left = '-9999px';
+    probe.style.top = '0';
+    probe.style.margin = '0'; probe.style.padding = '0'; probe.style.border = '0';
+    probe.style.fontFamily = cs.fontFamily;
+    probe.style.fontSize = cs.fontSize;
+    probe.style.fontWeight = cs.fontWeight;
+    probe.style.fontStyle = cs.fontStyle;
+    probe.style.letterSpacing = cs.letterSpacing;
+    probe.style.whiteSpace = 'pre';
+    probe.innerHTML = 'xxx<span>|</span>xxxx<span>|</span>xxxx';
+    document.body.appendChild(probe);
+    var bars = probe.querySelectorAll('span');
+    var probeLeft = probe.getBoundingClientRect().left;
+    var r1 = bars[0].getBoundingClientRect();
+    var r2 = bars[1].getBoundingClientRect();
+    var x1 = r1.left - probeLeft;
+    var x2 = r2.left - probeLeft;
+    var w = r1.right - r1.left;
+    document.body.removeChild(probe);
+    var lh = parseFloat(cs.lineHeight);
+    if (!(lh > 0)) lh = 1.5 * parseFloat(cs.fontSize);
+    ta.style.backgroundSize =
+      '100% ' + px(lh) + 'px, 100% ' + px(lh) + 'px, ' + px(w) + 'px 100%, ' + px(w) + 'px 100%';
+    ta.style.backgroundPosition =
+      '0 ' + px(3 * lh) + 'px, 0 ' + px(7 * lh) + 'px, ' + px(x1) + 'px 0, ' + px(x2) + 'px 0';
+  }
+  updateBands();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { updateBands(); });
+  window.addEventListener('resize', updateBands);
 
   // ---------- Démarrage ----------
   showEcran('mode', false); // écran 1 : choix du mode de jeu, pas de grille générée
