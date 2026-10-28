@@ -46,7 +46,8 @@
     background-repeat: no-repeat;
     background-attachment: local;
     background-size: 100% 1.5em, 100% 1.5em, 1ch 100%, 1ch 100%;
-    background-position: 0 4.5em, 0 10.5em, calc(3ch + 0.24em) 0, calc(8ch + 0.64em) 0;
+    background-position: 0 calc(0.65rem + 4.5em), 0 calc(0.65rem + 10.5em),
+      calc(0.8rem + 3ch + 0.24em) 0, calc(0.8rem + 8ch + 0.64em) 0;
     color: #000; resize: none; overflow-x: auto;
   }
   #status {
@@ -852,10 +853,17 @@
     document.body.removeChild(probe);
     var lh = parseFloat(cs.lineHeight);
     if (!(lh > 0)) lh = 1.5 * parseFloat(cs.fontSize);
+    // Le fond est positionné depuis la boîte de padding du champ, alors que
+    // la mesure est faite depuis le début du texte : il faut donc ajouter
+    // le padding, sinon les bandes glissent d'une case vers la gauche
+    // (et d'un tiers de ligne vers le haut).
+    var pl = parseFloat(cs.paddingLeft) || 0;
+    var pt = parseFloat(cs.paddingTop) || 0;
     ta.style.backgroundSize =
       '100% ' + px(lh) + 'px, 100% ' + px(lh) + 'px, ' + px(w) + 'px 100%, ' + px(w) + 'px 100%';
     ta.style.backgroundPosition =
-      '0 ' + px(3 * lh) + 'px, 0 ' + px(7 * lh) + 'px, ' + px(x1) + 'px 0, ' + px(x2) + 'px 0';
+      '0 ' + px(pt + 3 * lh) + 'px, 0 ' + px(pt + 7 * lh) + 'px, ' +
+      px(pl + x1) + 'px 0, ' + px(pl + x2) + 'px 0';
   }
   updateBands();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { updateBands(); });
