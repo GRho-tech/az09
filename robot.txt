@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://grho-tech.github.io/az09/sitemap.xml
